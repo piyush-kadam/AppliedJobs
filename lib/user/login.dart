@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'AppliedJobs',
+                    'AppliedPlus',
                     style: GoogleFonts.abel(
                       color: Colors.white,
                       fontSize: 40.0,
@@ -192,7 +192,7 @@ class _LoginPageState extends State<LoginPage> {
                               color: Colors.white,
                             )
                             : Text(
-                              'Sign in with Google',
+                              'Continue with Google',
                               style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontSize: 18.0,

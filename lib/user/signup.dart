@@ -86,7 +86,7 @@ class _SignUpPageState extends State<SignUpPage> {
             children: [
               // App Title
               Text(
-                'AppliedJobs',
+                'AppliedPlus',
                 style: GoogleFonts.abel(
                   color: Colors.white,
                   fontSize: 40.0,
