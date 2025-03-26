@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "534005978803",
+    "project_id": "appliedjobs-92085",
+    "storage_bucket": "appliedjobs-92085.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:534005978803:android:1f45411ae6313dacaa02c6",
+        "android_client_info": {
+          "package_name": "com.example.appliedjobs"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD27l40KmAvd69hhOlerY93Hg7D720ZLFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
