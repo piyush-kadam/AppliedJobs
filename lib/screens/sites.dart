@@ -1,8 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SitesPage extends StatelessWidget {
+class SitesPage extends StatefulWidget {
   const SitesPage({super.key});
+
+  @override
+  State<SitesPage> createState() => _SitesPageState();
+}
+
+class _SitesPageState extends State<SitesPage> {
+  bool _isConnected = false; // Flag to track connection status
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConnectionStatus();
+  }
+
+  // Load the connection status from SharedPreferences
+  Future<void> _loadConnectionStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isConnected = prefs.getBool('linkedin_connected') ?? false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +47,11 @@ class SitesPage extends StatelessWidget {
               context,
               'LinkedIn',
               'assets/images/linkedin.jpg',
-              Colors.blue,
-              _connectLinkedIn,
+              _isConnected ? Colors.green : Colors.blue,
+              _isConnected ? 'Connected' : 'Connect',
+              _isConnected
+                  ? null
+                  : _connectLinkedIn, // Disable tap if connected
             ),
           ],
         ),
@@ -39,7 +64,8 @@ class SitesPage extends StatelessWidget {
     String title,
     String iconPath,
     Color color,
-    VoidCallback onTap,
+    String buttonText,
+    VoidCallback? onTap,
   ) {
     return Card(
       elevation: 4,
@@ -49,9 +75,14 @@ class SitesPage extends StatelessWidget {
         title: Text(title),
         trailing: ElevatedButton.icon(
           onPressed: onTap,
-          icon: const Icon(Icons.login),
-          label: const Text('Connect'),
-          style: ElevatedButton.styleFrom(backgroundColor: color),
+          icon: Icon(_isConnected ? Icons.check : Icons.login),
+          label: Text(buttonText),
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all(
+              color,
+            ), // ✅ Proper color application
+            foregroundColor: MaterialStateProperty.all(Colors.white),
+          ),
         ),
       ),
     );
@@ -59,24 +90,34 @@ class SitesPage extends StatelessWidget {
 
   // OAuth Connection to LinkedIn
   void _connectLinkedIn() async {
-    const clientId = '863n2mh5e6vx5q';
-    const redirectUri = 'https://www.your-placeholder.com/oauth/callback';
-
-    const scope = 'w_member_social'; // Match your LinkedIn app scopes
-
-    // Encode the redirect URI
-    final encodedRedirectUri = Uri.encodeComponent(redirectUri);
+    const clientId = '863n2mh5e6vx5q'; // Your LinkedIn Client ID
+    const redirectUri =
+        'https://tinyurl.com/4wj7u2zp'; // Your Webhook redirect URI
+    const scope = 'w_member_social';
 
     final url =
         'https://www.linkedin.com/oauth/v2/authorization'
         '?response_type=code'
         '&client_id=$clientId'
-        '&redirect_uri=$encodedRedirectUri'
+        '&redirect_uri=$redirectUri'
         '&scope=$scope';
 
     try {
       if (await canLaunchUrl(Uri.parse(url))) {
         await launchUrl(Uri.parse(url));
+
+        // Simulate successful connection
+        setState(() {
+          _isConnected = true;
+        });
+
+        // Save connection status in SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('linkedin_connected', true);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Successfully connected to LinkedIn!')),
+        );
       } else {
         throw 'Could not launch $url';
       }

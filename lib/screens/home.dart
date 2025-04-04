@@ -24,8 +24,9 @@ class _HomePageState extends State<HomePage> {
   final AuthService authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  final List<Widget> _pages = [
-    const JobsPage(),
+  // Getter for _pages, it will dynamically return the updated value of 'isJoined'
+  List<Widget> get _pages => [
+    JobsPage(), // This updates when isJoined changes
     const AppliedPage(),
     const SitesPage(),
     const ProfilePage(),
@@ -184,11 +185,11 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: _pages[_selectedIndex],
+      body: _pages[_selectedIndex], // Use the dynamic getter here
 
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFE0E0E0),
           boxShadow: [
             BoxShadow(blurRadius: 20, color: Colors.black.withOpacity(0.1)),
           ],

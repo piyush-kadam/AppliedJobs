@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.appliedjobs">
 
+    <!-- Internet Permission for LinkedIn OAuth -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
@@ -18,11 +19,12 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            
+
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
 
+            <!-- Main Intent Filter -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -34,10 +36,16 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <!-- Replace with your app's redirect URI -->
+                <!-- LinkedIn OAuth Redirect (Web URL) -->
                 <data
                     android:scheme="https"
-                    android:host="yourapp.com"
+                    android:host="appliedjobs.com"
+                    android:path="/auth/callback" />
+
+                <!-- Flutter Deep Link (App URI) -->
+                <data
+                    android:scheme="appliedjobs"
+                    android:host="auth"
                     android:path="/callback" />
             </intent-filter>
         </activity>
@@ -47,7 +55,7 @@
             android:value="2" />
     </application>
 
-    <!-- Querying external URL handlers -->
+    <!-- Query external URL handlers -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
