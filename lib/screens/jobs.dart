@@ -6,6 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// ✅ Global cache to persist jobs and page state during app session
+List<dynamic>? cachedJobs;
+int cachedCurrentPage = 1;
+bool cachedHasMore = true;
+
 class JobsPage extends StatefulWidget {
   const JobsPage({super.key});
 
@@ -14,29 +19,66 @@ class JobsPage extends StatefulWidget {
 }
 
 class _JobsPageState extends State<JobsPage> {
-  late Future<List<dynamic>> _jobsFuture;
+  final List<dynamic> _jobs = [];
+  final ScrollController _scrollController = ScrollController();
   Set<String> bookmarkedJobIds = {};
+  int _currentPage = 1;
+  bool _isLoading = false;
+  bool _hasMore = true;
 
   @override
   void initState() {
     super.initState();
-    _jobsFuture = _loadJobs();
     _loadBookmarkedJobs();
+
+    // Use cached jobs if available
+    if (cachedJobs != null) {
+      _jobs.addAll(cachedJobs!);
+      _currentPage = cachedCurrentPage;
+      _hasMore = cachedHasMore;
+    } else {
+      _fetchNextPage(); // Fetch only if cache is empty
+    }
+
+    _scrollController.addListener(_onScroll);
   }
 
-  Future<List<dynamic>> _loadJobs() async {
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoading &&
+        _hasMore) {
+      _fetchNextPage();
+    }
+  }
+
+  Future<void> _fetchNextPage() async {
+    setState(() => _isLoading = true);
     try {
-      final jobs = await ApiService().fetchJobs(pages: 5);
-      if (kDebugMode) {
-        print("Jobs Fetched (${jobs.length} jobs):");
-        for (var job in jobs) {
-          print("🔹 ${job['job_title']} at ${job['employer_name']}");
-        }
+      final newJobs = await ApiService().fetchJobsPage(page: _currentPage);
+      if (newJobs.isEmpty) {
+        _hasMore = false;
+      } else {
+        setState(() {
+          _jobs.addAll(newJobs);
+          _currentPage++;
+
+          // ✅ Update global cache
+          cachedJobs = List.from(_jobs);
+          cachedCurrentPage = _currentPage;
+          cachedHasMore = _hasMore;
+        });
       }
-      return jobs;
     } catch (e) {
       if (kDebugMode) print("❌ Error fetching jobs: $e");
-      return [];
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -76,9 +118,7 @@ class _JobsPageState extends State<JobsPage> {
     try {
       if (bookmarkedJobIds.contains(docId)) {
         await docRef.delete();
-        setState(() {
-          bookmarkedJobIds.remove(docId);
-        });
+        setState(() => bookmarkedJobIds.remove(docId));
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text("Removed from bookmarks")));
@@ -92,9 +132,7 @@ class _JobsPageState extends State<JobsPage> {
           'job_publisher': job['job_publisher'],
           'timestamp': FieldValue.serverTimestamp(),
         });
-        setState(() {
-          bookmarkedJobIds.add(docId);
-        });
+        setState(() => bookmarkedJobIds.add(docId));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Job bookmarked successfully")),
         );
@@ -111,171 +149,166 @@ class _JobsPageState extends State<JobsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE0E0E0),
-      body: FutureBuilder<List<dynamic>>(
-        future: _jobsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.green),
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-                style: GoogleFonts.poppins(color: Colors.black),
-              ),
-            );
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Text(
-                'No jobs found.',
-                style: GoogleFonts.poppins(color: Colors.black),
-              ),
-            );
-          }
-
-          final jobs = snapshot.data!;
-          return ListView.builder(
-            itemCount: jobs.length,
-            itemBuilder: (context, index) {
-              final job = jobs[index];
-              final platform = job['job_publisher'] ?? 'Unknown Platform';
-              final companyLogo = job['employer_logo'];
-              final company = job['employer_name'] ?? 'Unknown Company';
-              final jobId = job['job_id'] ?? job['job_title'];
-
-              return Card(
-                color: Colors.white,
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(12),
-                  leading:
-                      companyLogo != null
-                          ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              companyLogo,
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                          : ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.asset(
-                              'assets/images/office.jpg',
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                  title: Text(
-                    job['job_title'] ?? 'No Title',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.black,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        company,
-                        style: GoogleFonts.poppins(
-                          color: Colors.green,
-                          fontWeight: FontWeight.w500,
-                        ),
+      body:
+          _jobs.isEmpty && _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(color: Colors.green),
+              )
+              : ListView.builder(
+                controller: _scrollController,
+                itemCount: _jobs.length + (_isLoading ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == _jobs.length) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: CircularProgressIndicator(color: Colors.green),
                       ),
-                      Text(
-                        "Platform: $platform",
-                        style: GoogleFonts.poppins(
-                          color: Colors.black87,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          bookmarkedJobIds.contains(jobId)
-                              ? Icons.bookmark
-                              : Icons.bookmark_border,
-                          color: Colors.green,
-                        ),
-                        onPressed: () => _bookmarkJob(job),
-                      ),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.green,
-                        size: 18,
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder:
-                          (_) => AlertDialog(
-                            backgroundColor: Colors.black,
-                            title: Text(
-                              job['job_title'] ?? 'Job Details',
-                              style: GoogleFonts.poppins(color: Colors.green),
-                            ),
-                            content: SizedBox(
-                              height: 300,
-                              child: SingleChildScrollView(
-                                child: Text(
-                                  job['job_description'] ?? 'No Description',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text(
-                                  'Close',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.green,
-                                  ),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  final url = job['job_apply_link'];
-                                  if (url != null) {
-                                    Navigator.pop(context);
-                                    _launchURL(url);
-                                  }
-                                },
-                                child: Text(
-                                  'Apply',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.green,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
                     );
-                  },
-                ),
-              );
-            },
-          );
-        },
-      ),
+                  }
+
+                  final job = _jobs[index];
+                  final platform = job['job_publisher'] ?? 'Unknown Platform';
+                  final companyLogo = job['employer_logo'];
+                  final company = job['employer_name'] ?? 'Unknown Company';
+                  final jobId = job['job_id'] ?? job['job_title'];
+
+                  return Card(
+                    color: Colors.white,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 4,
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(12),
+                      leading:
+                          companyLogo != null
+                              ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  companyLogo,
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.contain,
+                                ),
+                              )
+                              : ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.asset(
+                                  'assets/images/office.jpg',
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                      title: Text(
+                        job['job_title'] ?? 'No Title',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.black,
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            company,
+                            style: GoogleFonts.poppins(
+                              color: Colors.deepPurple,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            "Platform: $platform",
+                            style: GoogleFonts.poppins(
+                              color: Colors.black87,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              bookmarkedJobIds.contains(jobId)
+                                  ? Icons.bookmark
+                                  : Icons.bookmark_border,
+                              color: Colors.deepPurple,
+                            ),
+                            onPressed: () => _bookmarkJob(job),
+                          ),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.deepPurple,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder:
+                              (_) => AlertDialog(
+                                backgroundColor: Colors.black,
+                                title: Text(
+                                  job['job_title'] ?? 'Job Details',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.green,
+                                  ),
+                                ),
+                                content: SizedBox(
+                                  height: 300,
+                                  child: SingleChildScrollView(
+                                    child: Text(
+                                      job['job_description'] ??
+                                          'No Description',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: Text(
+                                      'Close',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      final url = job['job_apply_link'];
+                                      if (url != null) {
+                                        Navigator.pop(context);
+                                        _launchURL(url);
+                                      }
+                                    },
+                                    child: Text(
+                                      'Apply',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
     );
   }
 

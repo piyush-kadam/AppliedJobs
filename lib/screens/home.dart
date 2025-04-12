@@ -4,6 +4,7 @@ import 'package:appliedjobs/screens/applied_jobs.dart';
 import 'package:appliedjobs/screens/jobs.dart';
 import 'package:appliedjobs/screens/profile.dart';
 import 'package:appliedjobs/screens/sites.dart';
+import 'package:appliedjobs/user/start.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -151,9 +152,38 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
-        title: Text(
-          'AppliedPlus',
-          style: GoogleFonts.poppins(color: Colors.black),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 20.0),
+          child: IconButton(
+            icon: const Icon(Icons.auto_awesome, color: Colors.black),
+
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SitesPage()),
+              );
+            },
+          ),
+        ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min, // ensures it centers properly
+          children: [
+            const CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.deepPurple,
+              child: Icon(Icons.check, color: Colors.white),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "Applied Plus",
+              style: GoogleFonts.poppins(
+                color: Colors.deepPurple,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
         backgroundColor: const Color(0xFFE0E0E0),
@@ -165,9 +195,7 @@ class _HomePageState extends State<HomePage> {
               if (mounted) {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const LoginOrRegister(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const StartPage()),
                 );
               }
             },
@@ -187,33 +215,41 @@ class _HomePageState extends State<HomePage> {
       ),
       body: _pages[_selectedIndex], // Use the dynamic getter here
 
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFE0E0E0),
-          boxShadow: [
-            BoxShadow(blurRadius: 20, color: Colors.black.withOpacity(0.1)),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
-          child: GNav(
-            rippleColor: Colors.grey[300]!,
-            hoverColor: Colors.grey[100]!,
-            gap: 8,
-            activeColor: Colors.white,
-            iconSize: 24,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            duration: const Duration(milliseconds: 400),
-            tabBackgroundColor: Colors.black,
-            color: Colors.black,
-            tabs: const [
-              GButton(icon: Icons.work, text: 'Jobs'),
-              GButton(icon: Icons.assignment_turned_in, text: 'Applied'),
-              GButton(icon: Icons.web, text: 'Sites'),
-              GButton(icon: Icons.person, text: 'Profile'),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(10), // Padding from all sides
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 20,
+                color: Colors.black.withOpacity(0.1),
+                offset: const Offset(0, 10),
+              ),
             ],
-            selectedIndex: _selectedIndex,
-            onTabChange: _onItemTapped,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
+            child: GNav(
+              rippleColor: Colors.grey[300]!,
+              hoverColor: Colors.grey[100]!,
+              gap: 8,
+              activeColor: Colors.white,
+              iconSize: 24,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              duration: const Duration(milliseconds: 400),
+              tabBackgroundColor: Colors.deepPurple,
+              color: Colors.black,
+              tabs: const [
+                GButton(icon: Icons.work, text: 'Jobs'),
+                GButton(icon: Icons.assignment_turned_in, text: 'Applied'),
+                GButton(icon: Icons.web, text: 'Sites'),
+                GButton(icon: Icons.person, text: 'Profile'),
+              ],
+              selectedIndex: _selectedIndex,
+              onTabChange: _onItemTapped,
+            ),
           ),
         ),
       ),

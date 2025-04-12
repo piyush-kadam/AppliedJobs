@@ -1,5 +1,6 @@
 import 'package:appliedjobs/auth/authgate.dart';
 import 'package:appliedjobs/firebase_options.dart';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 

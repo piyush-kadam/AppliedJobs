@@ -113,7 +113,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.blue, width: 4),
+                          border: Border.all(
+                            color: Colors.deepPurple,
+                            width: 4,
+                          ),
                         ),
                         child: CircleAvatar(
                           radius: 70,
@@ -192,7 +195,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Text(
                             "About Me",
                             style: GoogleFonts.poppins(
-                              color: Colors.blue,
+                              color: Colors.deepPurple,
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
@@ -262,18 +265,22 @@ class _ProfilePageState extends State<ProfilePage> {
   }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      leading: Icon(icon, color: Colors.blue, size: 28),
+      leading: Icon(icon, color: Colors.deepPurple, size: 28),
       title: Text(
         label,
         style: GoogleFonts.poppins(
-          color: Colors.blue,
+          color: Colors.deepPurple,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
       ),
-      subtitle: Text(
-        value,
-        style: GoogleFonts.poppins(color: Colors.black, fontSize: 16),
+      subtitle: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          value,
+          style: GoogleFonts.poppins(color: Colors.black, fontSize: 16),
+        ),
       ),
     );
   }
@@ -288,7 +295,7 @@ class _ProfilePageState extends State<ProfilePage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       tileColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      leading: Icon(icon, color: Colors.blue, size: 28),
+      leading: Icon(icon, color: Colors.deepPurple, size: 28),
       title: Text(
         label,
         style: GoogleFonts.poppins(

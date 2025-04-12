@@ -105,7 +105,7 @@ class _DetailsPageState extends State<DetailsPage> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.deepPurple,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           if (!_isEditing)
@@ -153,7 +153,7 @@ class _DetailsPageState extends State<DetailsPage> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _saveDetails,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
+                            backgroundColor: Colors.deepPurple,
                             padding: const EdgeInsets.symmetric(
                               vertical: 14,
                               horizontal: 40,
@@ -196,12 +196,12 @@ class _DetailsPageState extends State<DetailsPage> {
         color: Colors.white,
 
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue, width: 1.5),
+        border: Border.all(color: Colors.deepPurple, width: 1.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.blue, size: 28),
+          Icon(icon, color: Colors.deepPurple, size: 28),
           const SizedBox(width: 15),
           Expanded(
             child:
@@ -218,7 +218,7 @@ class _DetailsPageState extends State<DetailsPage> {
                         labelText: label,
                         labelStyle: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: Colors.blue,
+                          color: Colors.deepPurple,
                         ),
                         border: InputBorder.none,
                       ),
@@ -231,7 +231,7 @@ class _DetailsPageState extends State<DetailsPage> {
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Colors.blue,
+                            color: Colors.deepPurple,
                           ),
                         ),
                         const SizedBox(height: 5),

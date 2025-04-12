@@ -30,10 +30,7 @@ class AppliedPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFE0E0E0),
-      appBar: AppBar(
-        title: Text('Bookmarked Jobs', style: GoogleFonts.poppins()),
-        backgroundColor: Colors.green,
-      ),
+
       body: StreamBuilder<QuerySnapshot>(
         stream: bookmarksRef.orderBy('timestamp', descending: true).snapshots(),
         builder: (context, snapshot) {
@@ -111,7 +108,7 @@ class AppliedPage extends StatelessWidget {
                       Text(
                         job['company'] ?? 'Unknown Company',
                         style: GoogleFonts.poppins(
-                          color: Colors.green,
+                          color: Colors.deepPurple,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -124,10 +121,45 @@ class AppliedPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  trailing: const Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.green,
-                    size: 18,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.bookmark,
+                          color: Colors.deepPurple,
+                        ),
+                        onPressed: () async {
+                          try {
+                            await bookmarksRef.doc(docs[index].id).delete();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Bookmark removed',
+                                  style: GoogleFonts.poppins(),
+                                ),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Failed to remove bookmark: $e',
+                                  style: GoogleFonts.poppins(),
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.deepPurple,
+                        size: 18,
+                      ),
+                    ],
                   ),
                   onTap: () {
                     showDialog(

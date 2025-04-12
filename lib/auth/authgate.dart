@@ -1,8 +1,8 @@
 import 'package:appliedjobs/auth/lr.dart';
 import 'package:appliedjobs/screens/home.dart';
+import 'package:appliedjobs/user/start.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -19,7 +19,7 @@ class AuthGate extends StatelessWidget {
           }
           // user is not logged in
           else {
-            return const LoginOrRegister();
+            return const StartPage();
           }
         },
       ),
