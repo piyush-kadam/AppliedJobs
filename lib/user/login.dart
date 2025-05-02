@@ -1,9 +1,11 @@
 import 'package:appliedjobs/auth/authservice.dart';
 import 'package:appliedjobs/screens/home.dart';
 import 'package:appliedjobs/user/signup.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginPage extends StatefulWidget {
   final VoidCallback onTap;
@@ -44,11 +46,54 @@ class _LoginPageState extends State<LoginPage> {
     try {
       setState(() => isLoading = true);
 
-      await authService.signInWithGoogle();
+      // Sign in with Google
+      UserCredential? userCredential = await authService.signInWithGoogle();
+      User? user = userCredential?.user;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Signed in with Google')));
+      if (user != null) {
+        // Check if the user exists in Firestore
+        final userDoc =
+            await FirebaseFirestore.instance
+                .collection('Users')
+                .doc(user.uid)
+                .get();
+
+        if (userDoc.exists) {
+          // User exists → allow login
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Signed in with Google')),
+          );
+        } else {
+          // New user → Sign out from both Firebase and Google
+          await FirebaseAuth.instance.signOut();
+          await GoogleSignIn()
+              .signOut(); // Force Google account selection next time
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: const [
+                  Icon(Icons.info_outline, color: Colors.white),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'No account found. Please sign up first.',
+                      style: TextStyle(fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.deepPurple,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
     } catch (e) {
       ScaffoldMessenger.of(
         context,

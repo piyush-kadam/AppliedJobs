@@ -3,6 +3,7 @@ import 'package:appliedjobs/screens/home.dart';
 import 'package:appliedjobs/user/login.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignUpPage extends StatefulWidget {
   final VoidCallback onTap;
@@ -38,7 +39,18 @@ class _SignUpPageState extends State<SignUpPage> {
     setState(() => isLoading = true);
 
     try {
-      await _authService.signUpWithEmailPassword(email, password);
+      final userCredential = await _authService.signUpWithEmailPassword(
+        email,
+        password,
+      );
+      await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userCredential.user!.uid)
+          .set({
+            'uid': userCredential.user!.uid,
+            'email': userCredential.user!.email,
+          });
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
@@ -56,6 +68,17 @@ class _SignUpPageState extends State<SignUpPage> {
     try {
       final userCredential = await _authService.signInWithGoogle();
       if (userCredential != null) {
+        final userDoc = FirebaseFirestore.instance
+            .collection('Users')
+            .doc(userCredential.user!.uid);
+        final snapshot = await userDoc.get();
+        if (!snapshot.exists) {
+          await userDoc.set({
+            'uid': userCredential.user!.uid,
+            'email': userCredential.user!.email,
+          });
+        }
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
@@ -108,10 +131,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 30),
-
-              // Main Card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
@@ -150,8 +170,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Google button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -175,7 +193,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     Row(
                       children: [
                         Expanded(child: Divider(color: Colors.grey.shade300)),
@@ -193,11 +210,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       ],
                     ),
                     const SizedBox(height: 20),
-
-                    // Full Name
-                    const SizedBox(height: 16),
-
-                    // Email
                     TextField(
                       controller: _emailController,
                       style: const TextStyle(color: Colors.black),
@@ -214,8 +226,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Password
                     TextField(
                       controller: _passwordController,
                       obscureText: true,
@@ -233,8 +243,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Confirm Password
                     TextField(
                       controller: _confirmPasswordController,
                       obscureText: true,
@@ -252,8 +260,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Sign up button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -283,8 +289,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Already have account
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

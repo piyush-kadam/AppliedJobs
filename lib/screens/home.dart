@@ -1,15 +1,13 @@
+import 'dart:io';
 import 'package:appliedjobs/auth/authservice.dart';
-import 'package:appliedjobs/auth/lr.dart';
 import 'package:appliedjobs/screens/applied_jobs.dart';
 import 'package:appliedjobs/screens/jobs.dart';
 import 'package:appliedjobs/screens/profile.dart';
-import 'package:appliedjobs/screens/sites.dart';
-import 'package:appliedjobs/user/start.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -29,7 +27,7 @@ class _HomePageState extends State<HomePage> {
   List<Widget> get _pages => [
     JobsPage(), // This updates when isJoined changes
     const AppliedPage(),
-    const SitesPage(),
+
     const ProfilePage(),
   ];
 
@@ -147,72 +145,82 @@ class _HomePageState extends State<HomePage> {
     return snapshot.docs.isNotEmpty;
   }
 
+  Future<String?> _getProfileImageUrl() async {
+    final user = authService.getCurrentUser();
+    if (user != null) {
+      DocumentSnapshot userDoc =
+          await _firestore.collection('Users').doc(user.uid).get();
+      if (userDoc.exists && userDoc.data() != null) {
+        final data = userDoc.data() as Map<String, dynamic>;
+        return data['profileImageUrl'] as String?;
+      }
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 20.0),
-          child: IconButton(
-            icon: const Icon(Icons.auto_awesome, color: Colors.black),
-
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SitesPage()),
-              );
-            },
-          ),
-        ),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min, // ensures it centers properly
-          children: [
-            const CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.deepPurple,
-              child: Icon(Icons.check, color: Colors.white),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              "Applied Plus",
-              style: GoogleFonts.poppins(
-                color: Colors.deepPurple,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+        title: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              const CircleAvatar(
+                radius: 18,
+                backgroundColor: Colors.deepPurple,
+                child: Icon(Icons.check, color: Colors.white),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                "AppliedPlus",
+                style: GoogleFonts.poppins(
+                  color: Colors.deepPurple,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
         centerTitle: true,
         backgroundColor: const Color(0xFFE0E0E0),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black),
-            onPressed: () async {
-              await authService.signOut();
-              if (mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const StartPage()),
-                );
-              }
-            },
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.group_add,
-              color: isJoined ? Colors.green : Colors.red,
-            ),
-            onPressed: () async {
-              if (!isJoined) {
-                await _joinUser();
-              }
+          FutureBuilder<String?>(
+            future: _getProfileImageUrl(),
+            builder: (context, snapshot) {
+              final imageUrl = snapshot.data;
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedIndex =
+                          2; // index of 'Profile' tab (corrected from 3)
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.deepPurple, width: 2),
+                    ),
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.black,
+                      backgroundImage:
+                          imageUrl != null ? NetworkImage(imageUrl) : null,
+                    ),
+                  ),
+                ),
+              );
             },
           ),
         ],
+        automaticallyImplyLeading: false,
       ),
+
       body: _pages[_selectedIndex], // Use the dynamic getter here
 
       bottomNavigationBar: Padding(
@@ -244,7 +252,7 @@ class _HomePageState extends State<HomePage> {
               tabs: const [
                 GButton(icon: Icons.work, text: 'Jobs'),
                 GButton(icon: Icons.assignment_turned_in, text: 'Applied'),
-                GButton(icon: Icons.web, text: 'Sites'),
+
                 GButton(icon: Icons.person, text: 'Profile'),
               ],
               selectedIndex: _selectedIndex,
