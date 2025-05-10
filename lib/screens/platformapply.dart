@@ -153,7 +153,7 @@ class _PlatformApplyPageState extends State<PlatformApplyPage>
             TextButton(
               child: Text(
                 'Yes',
-                style: GoogleFonts.poppins(color: Colors.deepPurple),
+                style: GoogleFonts.poppins(color: Color(0xFF3D47D1)),
               ),
               onPressed: () async {
                 print('User indicated they DID apply');
@@ -419,7 +419,7 @@ class _PlatformApplyPageState extends State<PlatformApplyPage>
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF3D47D1),
         elevation: 0,
         title: Text(
           'Job Details',
@@ -555,7 +555,7 @@ class _PlatformApplyPageState extends State<PlatformApplyPage>
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
+                    backgroundColor: Color(0xFF3D47D1),
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -580,7 +580,7 @@ class _PlatformApplyPageState extends State<PlatformApplyPage>
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
+                    backgroundColor: Color(0xFF3D47D1),
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

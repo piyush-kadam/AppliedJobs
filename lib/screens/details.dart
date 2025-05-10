@@ -210,7 +210,7 @@ class _DetailsPageState extends State<DetailsPage> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF3D47D1),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           if (!_isEditing)
@@ -223,7 +223,7 @@ class _DetailsPageState extends State<DetailsPage> {
       body:
           _isLoading
               ? const Center(
-                child: CircularProgressIndicator(color: Colors.deepPurple),
+                child: CircularProgressIndicator(color: Color(0xFF3D47D1)),
               )
               : SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -284,17 +284,17 @@ class _DetailsPageState extends State<DetailsPage> {
                             onPressed: _addWorkExperience,
                             icon: const Icon(
                               Icons.add,
-                              color: Colors.deepPurple,
+                              color: Color(0xFF3D47D1),
                             ),
                             label: Text(
                               'Add Work Experience',
                               style: GoogleFonts.poppins(
-                                color: Colors.deepPurple,
+                                color: Color(0xFF3D47D1),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.deepPurple),
+                              side: const BorderSide(color: Color(0xFF3D47D1)),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 12,
@@ -323,17 +323,17 @@ class _DetailsPageState extends State<DetailsPage> {
                             onPressed: _addEducation,
                             icon: const Icon(
                               Icons.add,
-                              color: Colors.deepPurple,
+                              color: Color(0xFF3D47D1),
                             ),
                             label: Text(
                               'Add Education',
                               style: GoogleFonts.poppins(
-                                color: Colors.deepPurple,
+                                color: Color(0xFF3D47D1),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.deepPurple),
+                              side: const BorderSide(color: Color(0xFF3D47D1)),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 12,
@@ -349,7 +349,7 @@ class _DetailsPageState extends State<DetailsPage> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _saveDetails,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
+                            backgroundColor: Color(0xFF3D47D1),
                             padding: const EdgeInsets.symmetric(
                               vertical: 14,
                               horizontal: 40,
@@ -397,7 +397,7 @@ class _DetailsPageState extends State<DetailsPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.deepPurple.withOpacity(0.5)),
+              border: Border.all(color: Color(0xFF3D47D1).withOpacity(0.5)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
@@ -419,7 +419,7 @@ class _DetailsPageState extends State<DetailsPage> {
                           color: Colors.white,
                         ),
                       ),
-                      backgroundColor: Colors.deepPurple,
+                      backgroundColor: Color(0xFF3D47D1),
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                     );
                   }).toList(),
@@ -432,7 +432,7 @@ class _DetailsPageState extends State<DetailsPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.deepPurple.withOpacity(0.5)),
+          border: Border.all(color: Color(0xFF3D47D1).withOpacity(0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,6 +442,8 @@ class _DetailsPageState extends State<DetailsPage> {
                 Expanded(
                   child: TextField(
                     controller: _skillController,
+                    textCapitalization:
+                        TextCapitalization.words, // 👈 Add this line
                     decoration: InputDecoration(
                       hintText: 'Add a skill',
                       hintStyle: GoogleFonts.poppins(fontSize: 13),
@@ -459,7 +461,7 @@ class _DetailsPageState extends State<DetailsPage> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.add, color: Colors.deepPurple),
+                  icon: const Icon(Icons.add, color: Color(0xFF3D47D1)),
                   onPressed: () {
                     if (_skillController.text.trim().isNotEmpty) {
                       _addSkill(_skillController.text);
@@ -483,7 +485,7 @@ class _DetailsPageState extends State<DetailsPage> {
                             color: Colors.white,
                           ),
                         ),
-                        backgroundColor: Colors.deepPurple,
+                        backgroundColor: Color(0xFF3D47D1),
                         deleteIconColor: Colors.white,
                         onDeleted: () => _removeSkill(skill),
                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -509,9 +511,14 @@ class _DetailsPageState extends State<DetailsPage> {
 
   void _addSkill(String skill) {
     final trimmedSkill = skill.trim();
-    if (trimmedSkill.isNotEmpty && !skills.contains(trimmedSkill)) {
+    if (trimmedSkill.isEmpty) return;
+
+    final capitalizedSkill =
+        trimmedSkill[0].toUpperCase() + trimmedSkill.substring(1);
+
+    if (!skills.contains(capitalizedSkill)) {
       setState(() {
-        skills.add(trimmedSkill);
+        skills.add(capitalizedSkill);
         _skillController.clear();
       });
     }
@@ -536,20 +543,24 @@ class _DetailsPageState extends State<DetailsPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.deepPurple, width: 1.5),
+        border: Border.all(color: Color(0xFF3D47D1), width: 1.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.deepPurple, size: 28),
+          Icon(icon, color: Color(0xFF3D47D1), size: 28),
           const SizedBox(width: 15),
           Expanded(
             child:
                 isEditing
                     ? TextField(
                       controller: controller,
-                      maxLines: maxLines,
-                      keyboardType: keyboardType,
+                      maxLines: null, // 👈 Allows multi-line input
+                      keyboardType:
+                          TextInputType.multiline, // 👈 Enables Enter/new line
+                      textCapitalization:
+                          TextCapitalization
+                              .sentences, // 👈 Capitalize first letter of each sentence
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         color: Colors.black,
@@ -558,7 +569,7 @@ class _DetailsPageState extends State<DetailsPage> {
                         labelText: label,
                         labelStyle: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: Colors.deepPurple,
+                          color: Color(0xFF3D47D1),
                         ),
                         border: InputBorder.none,
                       ),
@@ -571,7 +582,7 @@ class _DetailsPageState extends State<DetailsPage> {
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Colors.deepPurple,
+                            color: Color(0xFF3D47D1),
                           ),
                         ),
                         const SizedBox(height: 5),
@@ -595,14 +606,14 @@ class _DetailsPageState extends State<DetailsPage> {
   Widget _buildSectionHeader(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, color: Colors.deepPurple, size: 24),
+        Icon(icon, color: Color(0xFF3D47D1), size: 24),
         const SizedBox(width: 10),
         Text(
           title,
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Colors.deepPurple,
+            color: Color(0xFF3D47D1),
           ),
         ),
       ],
@@ -617,7 +628,7 @@ class _DetailsPageState extends State<DetailsPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.deepPurple.withOpacity(0.5)),
+          border: Border.all(color: Color(0xFF3D47D1).withOpacity(0.5)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -647,7 +658,7 @@ class _DetailsPageState extends State<DetailsPage> {
                   exp['employmentType'] ?? 'Type',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: Colors.deepPurple,
+                    color: Color(0xFF3D47D1),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -702,7 +713,7 @@ class _DetailsPageState extends State<DetailsPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.deepPurple.withOpacity(0.5)),
+          border: Border.all(color: Color(0xFF3D47D1).withOpacity(0.5)),
         ),
         child: Column(
           children: [
@@ -715,7 +726,7 @@ class _DetailsPageState extends State<DetailsPage> {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.deepPurple,
+                      color: Color(0xFF3D47D1),
                     ),
                   ),
                 ),
@@ -773,7 +784,7 @@ class _DetailsPageState extends State<DetailsPage> {
             _buildTextField(
               label: 'Description',
               controller: controllers['description']!,
-              maxLines: 3,
+              keyboardType: TextInputType.multiline,
             ),
           ],
         ),
@@ -789,7 +800,7 @@ class _DetailsPageState extends State<DetailsPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.deepPurple.withOpacity(0.5)),
+          border: Border.all(color: Color(0xFF3D47D1).withOpacity(0.5)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -835,7 +846,7 @@ class _DetailsPageState extends State<DetailsPage> {
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.deepPurple,
+                      color: Color(0xFF3D47D1),
                     ),
                   ),
               ],
@@ -866,7 +877,7 @@ class _DetailsPageState extends State<DetailsPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.deepPurple.withOpacity(0.5)),
+          border: Border.all(color: Color(0xFF3D47D1).withOpacity(0.5)),
         ),
         child: Column(
           children: [
@@ -879,7 +890,7 @@ class _DetailsPageState extends State<DetailsPage> {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.deepPurple,
+                      color: Color(0xFF3D47D1),
                     ),
                   ),
                 ),
@@ -953,21 +964,22 @@ class _DetailsPageState extends State<DetailsPage> {
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
-    int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: TextField(
         controller: controller,
-        maxLines: maxLines,
         keyboardType: keyboardType,
+        maxLines: null, // Allows paragraph input
+        textCapitalization:
+            TextCapitalization.sentences, // Capitalize first letter
         style: GoogleFonts.poppins(fontSize: 13, color: Colors.black),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.deepPurple,
+            color: Color(0xFF3D47D1),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
@@ -983,7 +995,7 @@ class _DetailsPageState extends State<DetailsPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.deepPurple, width: 1.5),
+            borderSide: const BorderSide(color: Color(0xFF3D47D1), width: 1.5),
           ),
         ),
       ),
@@ -1003,7 +1015,7 @@ class _DetailsPageState extends State<DetailsPage> {
           labelText: label,
           labelStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.deepPurple,
+            color: Color(0xFF3D47D1),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
@@ -1056,7 +1068,7 @@ class _DetailsPageState extends State<DetailsPage> {
               return Theme(
                 data: Theme.of(context).copyWith(
                   colorScheme: const ColorScheme.light(
-                    primary: Colors.deepPurple,
+                    primary: Color(0xFF3D47D1),
                   ),
                 ),
                 child: child!,
@@ -1074,7 +1086,7 @@ class _DetailsPageState extends State<DetailsPage> {
           hintText: hintText,
           labelStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.deepPurple,
+            color: Color(0xFF3D47D1),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
@@ -1119,7 +1131,7 @@ class _DetailsPageState extends State<DetailsPage> {
               return Theme(
                 data: Theme.of(context).copyWith(
                   colorScheme: const ColorScheme.light(
-                    primary: Colors.deepPurple,
+                    primary: Color(0xFF3D47D1),
                   ),
                 ),
                 child: child!,
@@ -1137,7 +1149,7 @@ class _DetailsPageState extends State<DetailsPage> {
           labelText: label,
           labelStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.deepPurple,
+            color: Color(0xFF3D47D1),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,

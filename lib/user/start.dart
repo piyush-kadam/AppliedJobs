@@ -22,10 +22,13 @@ class StartPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.deepPurple,
-                        child: Icon(Icons.check, color: Colors.white),
+                      ClipOval(
+                        child: Image.asset(
+                          'assets/images/plus.png',
+                          width: 46,
+                          height: 46,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Text(
@@ -33,11 +36,12 @@ class StartPage extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: Colors.deepPurple,
+                          color: Color(0xFF3D47D1),
                         ),
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 40),
                   RichText(
                     textAlign: TextAlign.center,
@@ -54,7 +58,7 @@ class StartPage extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 26,
                             fontWeight: FontWeight.w600,
-                            color: Colors.deepPurple,
+                            color: Color(0xFF3D47D1),
                           ),
                         ),
                       ],
@@ -88,7 +92,7 @@ class StartPage extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
+                    backgroundColor: Color(0xFF3D47D1),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),

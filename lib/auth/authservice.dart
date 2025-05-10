@@ -43,6 +43,17 @@ class AuthService {
     }
   }
 
+  Future<void> sendPasswordResetEmail(String email) async {
+    if (email.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'empty-email',
+        message: 'Please enter your email address',
+      );
+    }
+
+    await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+  }
+
   // Google Sign-In
   Future<UserCredential?> signInWithGoogle() async {
     try {
@@ -79,5 +90,3 @@ class AuthService {
     }
   }
 }
-
-

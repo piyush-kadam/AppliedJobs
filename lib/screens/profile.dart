@@ -536,7 +536,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Colors.deepPurple,
+                              color: Color(0xFF3D47D1),
                               width: 4,
                             ),
                           ),
@@ -579,7 +579,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             const SizedBox(width: 8),
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors.deepPurple,
+                                color: Color(0xFF3D47D1),
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
@@ -659,7 +659,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Text(
                             "About Me",
                             style: GoogleFonts.poppins(
-                              color: Colors.deepPurple,
+                              color: Color(0xFF3D47D1),
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
@@ -706,7 +706,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Text(
                             "Resume",
                             style: GoogleFonts.poppins(
-                              color: Colors.deepPurple,
+                              color: Color(0xFF3D47D1),
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
@@ -739,7 +739,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   label: Text(
                                     "View Resume",
                                     style: GoogleFonts.poppins(
-                                      color: Colors.deepPurple,
+                                      color: Color(0xFF3D47D1),
                                     ),
                                   ),
                                 ),
@@ -762,7 +762,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
+                              backgroundColor: Color(0xFF3D47D1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -934,11 +934,11 @@ class _ProfilePageState extends State<ProfilePage> {
   }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      leading: Icon(icon, color: Colors.deepPurple, size: 28),
+      leading: Icon(icon, color: Color(0xFF3D47D1), size: 28),
       title: Text(
         label,
         style: GoogleFonts.poppins(
-          color: Colors.deepPurple,
+          color: Color(0xFF3D47D1),
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
@@ -964,7 +964,7 @@ class _ProfilePageState extends State<ProfilePage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       tileColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      leading: Icon(icon, color: Colors.deepPurple, size: 28),
+      leading: Icon(icon, color: Color(0xFF3D47D1), size: 28),
       title: Text(
         label,
         style: GoogleFonts.poppins(

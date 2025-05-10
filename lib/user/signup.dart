@@ -112,20 +112,23 @@ class _SignUpPageState extends State<SignUpPage> {
             children: [
               Center(
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.deepPurple,
-                      child: Icon(Icons.check, color: Colors.white),
+                    ClipOval(
+                      child: Image.asset(
+                        'assets/images/plus.png',
+                        width: 46,
+                        height: 46,
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Text(
                       "Applied Plus",
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: Colors.deepPurple,
+                        color: Color(0xFF3D47D1),
                       ),
                     ),
                   ],
@@ -188,7 +191,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         label: Text(
                           "Continue with Google",
-                          style: GoogleFonts.poppins(color: Colors.black),
+                          style: GoogleFonts.poppins(color: Color(0xFF3D47D1)),
                         ),
                       ),
                     ),
@@ -265,7 +268,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _signUp,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
+                          backgroundColor: Color(0xFF3D47D1),
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.0),
@@ -331,7 +334,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           child: Text(
                             'Sign in',
                             style: GoogleFonts.poppins(
-                              color: Colors.deepPurple,
+                              color: Color(0xFF3D47D1),
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                             ),

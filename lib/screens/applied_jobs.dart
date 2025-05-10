@@ -1,4 +1,5 @@
 import 'package:appliedjobs/screens/platformapply.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -56,7 +57,7 @@ class _AppliedPageState extends State<AppliedPage>
     return Scaffold(
       backgroundColor: const Color(0xFFE0E0E0),
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF3D47D1),
         elevation: 0,
         title: Padding(
           padding: const EdgeInsets.all(9.0),
@@ -96,7 +97,7 @@ class _AppliedPageState extends State<AppliedPage>
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search jobs...',
-                prefixIcon: const Icon(Icons.search, color: Colors.deepPurple),
+                prefixIcon: const Icon(Icons.search, color: Color(0xFF3D47D1)),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -163,7 +164,7 @@ class BookmarksTab extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Colors.deepPurple),
+            child: CircularProgressIndicator(color: Color(0xFF3D47D1)),
           );
         }
 
@@ -288,7 +289,7 @@ class AppliedJobsTab extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Colors.deepPurple),
+            child: CircularProgressIndicator(color: Color(0xFF3D47D1)),
           );
         }
 
@@ -386,160 +387,360 @@ class BookmarkJobCard extends StatelessWidget {
     required this.collectionRef,
   });
 
+  // Helper function to extract job type
+  String? _extractJobType(String? description) {
+    if (description == null) return null;
+
+    final lowercaseDesc = description.toLowerCase();
+    if (lowercaseDesc.contains('full-time') ||
+        lowercaseDesc.contains('full time')) {
+      return 'Full-time';
+    } else if (lowercaseDesc.contains('part-time') ||
+        lowercaseDesc.contains('part time')) {
+      return 'Part-time';
+    } else if (lowercaseDesc.contains('contract')) {
+      return 'Contract';
+    } else if (lowercaseDesc.contains('internship')) {
+      return 'Internship';
+    } else if (lowercaseDesc.contains('remote')) {
+      return 'Remote';
+    }
+    return null;
+  }
+
+  // Helper function to extract location from job data
+  String? _extractLocation(Map<String, dynamic> job) {
+    return job['job_city'] ??
+        job['job_country'] ??
+        job['location'] ??
+        (job['job_description'] != null &&
+                job['job_description'].toString().contains('Location:')
+            ? _extractLocationFromDesc(job['job_description'])
+            : null);
+  }
+
+  String? _extractLocationFromDesc(String description) {
+    final locationMatch = RegExp(
+      r'Location:\s*([^,\n]+)',
+    ).firstMatch(description);
+    return locationMatch?.group(1)?.trim();
+  }
+
+  // Helper function to extract salary from description
+  String? _extractSalary(String? description) {
+    if (description == null) return null;
+
+    final salaryRegex = RegExp(
+      r'(\$\d+[\d,.]*\s*[-–]\s*\$?\d+[\d,.]*\s*(k|K|thousand|million)?|(\$\d+[\d,.]*\s*(k|K|thousand|million)?(\s*per\s*(year|month|hour|annum)))|(salary:?\s*\$\d+[\d,.]*\s*[-–]\s*\$?\d+[\d,.]*))',
+      caseSensitive: false,
+    );
+    final match = salaryRegex.firstMatch(description);
+    return match?.group(0);
+  }
+
+  // Helper function to extract experience level
+  String? _extractExperience(String? description) {
+    if (description == null) return null;
+
+    final lowercaseDesc = description.toLowerCase();
+    if (lowercaseDesc.contains('entry level') ||
+        lowercaseDesc.contains('0-1 year') ||
+        lowercaseDesc.contains('junior') ||
+        lowercaseDesc.contains('no experience')) {
+      return 'Entry Level';
+    } else if (lowercaseDesc.contains('mid level') ||
+        lowercaseDesc.contains('2-5 years') ||
+        lowercaseDesc.contains('intermediate')) {
+      return 'Mid Level';
+    } else if (lowercaseDesc.contains('senior') ||
+        lowercaseDesc.contains('5+ years') ||
+        lowercaseDesc.contains('experienced')) {
+      return 'Senior';
+    }
+
+    // Try to extract years of experience
+    final expRegex = RegExp(
+      r'(\d+)[\+]?\s*[\-]?\s*(\d+)?\s+years?\s+(?:of\s+)?experience',
+      caseSensitive: false,
+    );
+    final match = expRegex.firstMatch(lowercaseDesc);
+    if (match != null) {
+      final minYears = int.tryParse(match.group(1) ?? '0') ?? 0;
+      if (minYears <= 1) {
+        return 'Entry Level';
+      } else if (minYears <= 5) {
+        return 'Mid Level';
+      } else {
+        return 'Senior';
+      }
+    }
+
+    return null;
+  }
+
+  // Method to build info pills using the extraction methods
+  Widget _buildInfoPills(Map<String, dynamic> job) {
+    // Use provided extraction methods
+    final jobDescription = job['job_description'] ?? job['description'];
+    final jobType =
+        job['employment_type'] ??
+        job['job_employment_type'] ??
+        _extractJobType(jobDescription);
+
+    final location = _extractLocation(job);
+
+    final salary =
+        job['job_min_salary'] != null && job['job_max_salary'] != null
+            ? '${job['job_min_salary']}-${job['job_max_salary']} ${job['job_salary_currency'] ?? ''}'
+            : _extractSalary(jobDescription);
+
+    final experience =
+        job['experienceLevel'] ?? _extractExperience(jobDescription);
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          if (jobType != null && jobType.isNotEmpty)
+            _buildInfoPill(jobType, Icons.work),
+          if (location != null && location.isNotEmpty)
+            _buildInfoPill(location, Icons.location_on),
+          if (salary != null && salary.isNotEmpty)
+            _buildInfoPill(salary, Icons.currency_rupee),
+          if (experience != null && experience.isNotEmpty)
+            _buildInfoPill(experience, Icons.star),
+        ],
+      ),
+    );
+  }
+
+  // Method to build individual info pill
+  Widget _buildInfoPill(String text, IconData icon) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.black),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.black),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Method to clean job title if needed
+  String _cleanTitle(String title) {
+    // You can implement the same title cleaning logic as in your API job card
+    return title;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
-        leading:
-            hasLogo
-                ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    job['employer_logo'],
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                  ),
-                )
-                : ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    'assets/images/office.jpg',
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.contain,
-                  ),
+    final companyLogo = hasLogo ? job['employer_logo'] : null;
+
+    return InkWell(
+      onTap: () {
+        if (isTypeA) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => PlatformApplyPage(job: job, isTypeA: isTypeA),
+            ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Apply(jobId: docId)),
+          );
+        }
+      },
+      child: Card(
+        color: Colors.white,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 4,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1st Row - Info Pills
+              _buildInfoPills(job),
+              const SizedBox(height: 12),
+
+              // 2nd Row - Job Title (above Logo + Company Row)
+              Text(
+                _cleanTitle(jobTitle),
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black,
                 ),
-        title: Text(
-          jobTitle,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: Colors.black,
+              ),
+              const SizedBox(height: 12),
+
+              // 3rd Row - Logo + Company (in one row)
+              Row(
+                crossAxisAlignment:
+                    CrossAxisAlignment.center, // Align logo and text properly
+                children: [
+                  // Company Logo with Circular Border, size based on text size
+                  Container(
+                    height: 32,
+                    width: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Color(0xFF3D47D1), width: 2),
+                    ),
+                    child: ClipOval(
+                      child:
+                          companyLogo.isNotEmpty
+                              ? Image.network(
+                                companyLogo,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Image.asset(
+                                    'assets/images/office.jpg',
+                                    fit: BoxFit.contain,
+                                  );
+                                },
+                              )
+                              : Image.asset(
+                                'assets/images/office.jpg',
+                                fit: BoxFit.cover,
+                              ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Company Name with AutoSizeText
+                  Expanded(
+                    child: AutoSizeText(
+                      company,
+                      style: GoogleFonts.poppins(
+                        color: Color(0xFF3D47D1),
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16, // Same font size as the logo size
+                      ),
+                      maxLines: 1, // Ensure it's in one line
+                      minFontSize: 10, // Minimum font size when text overflows
+                      overflow:
+                          TextOverflow
+                              .ellipsis, // Add ellipsis when text overflows
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // 4th Row - Platform Info + Bookmark + Apply
+              Row(
+                children: [
+                  // Platform Info (Bold "Platform:")
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        style: GoogleFonts.poppins(
+                          color: Colors.black87,
+                          fontSize: 13,
+                        ),
+                        children: [
+                          const TextSpan(
+                            text: '',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(
+                            text: publisher,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Bookmark Icon
+                  IconButton(
+                    icon: const Icon(Icons.bookmark, color: Color(0xFF3D47D1)),
+                    onPressed: () async {
+                      try {
+                        await collectionRef.doc(docId).delete();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Bookmark removed',
+                              style: GoogleFonts.poppins(),
+                            ),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Failed to remove bookmark: $e',
+                              style: GoogleFonts.poppins(),
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+
+                  // Apply Button
+                  ElevatedButton(
+                    onPressed: () {
+                      if (isTypeA) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => PlatformApplyPage(
+                                  job: job,
+                                  isTypeA: isTypeA,
+                                ),
+                          ),
+                        );
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Apply(jobId: docId),
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF3D47D1),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: Text(
+                      "Apply",
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              company,
-              style: GoogleFonts.poppins(
-                color: Colors.deepPurple,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              publisher,
-              style: GoogleFonts.poppins(color: Colors.black87, fontSize: 13),
-            ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.bookmark, color: Colors.deepPurple),
-              onPressed: () async {
-                try {
-                  await collectionRef.doc(docId).delete();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Bookmark removed',
-                        style: GoogleFonts.poppins(),
-                      ),
-                      backgroundColor: Colors.redAccent,
-                    ),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Failed to remove bookmark: $e',
-                        style: GoogleFonts.poppins(),
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-            ),
-            isTypeA
-                ? ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                PlatformApplyPage(job: job, isTypeA: isTypeA),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                  ),
-                  child: Text(
-                    'Apply',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                  ),
-                )
-                : ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Apply(jobId: docId),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                  ),
-                  child: Text(
-                    'Apply',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                  ),
-                ),
-          ],
-        ),
-        onTap: () {
-          if (isTypeA) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (context) => PlatformApplyPage(job: job, isTypeA: isTypeA),
-              ),
-            );
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Apply(jobId: docId)),
-            );
-          }
-        },
       ),
     );
   }
@@ -589,6 +790,26 @@ class AppliedJobCard extends StatelessWidget {
     }
   }
 
+  // Helper method to get status color
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Colors.orange;
+      case 'reviewing':
+        return Colors.blue;
+      case 'interviewed':
+        return Colors.purple;
+      case 'shortlisted':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      case 'hired':
+        return Colors.teal;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final title = job['title'] ?? 'No Title';
@@ -599,6 +820,8 @@ class AppliedJobCard extends StatelessWidget {
     final appliedAt = job['appliedAt'];
     final experienceLevel = job['experienceLevel'] ?? '';
     final companyLogo = job['companyLogo'] ?? '';
+    // Get the status from the job data
+    final status = job['status'] ?? 'Pending';
 
     return Card(
       color: Colors.white,
@@ -607,12 +830,39 @@ class AppliedJobCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top status bar
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: _getStatusColor(status).withOpacity(0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Row(
+              children: [
+                Icon(Icons.circle, size: 12, color: _getStatusColor(status)),
+                const SizedBox(width: 6),
+                Text(
+                  'Status: $status',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: _getStatusColor(status),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           Padding(
             padding: const EdgeInsets.all(8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Job tags row
+                // Info tags row
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -628,19 +878,34 @@ class AppliedJobCard extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // Company logo + title and name
+                // Row 1: Job Title
+                AutoSizeText(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                  ),
+                  maxLines: 1,
+                  minFontSize: 12,
+                  overflow: TextOverflow.visible,
+                ),
+
+                const SizedBox(height: 8),
+
+                // Row 2: Logo + Company
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // Circular logo
                     Container(
-                      height: 48,
-                      width: 48,
+                      height: 32,
+                      width: 32,
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.deepPurple, width: 2),
-                        borderRadius: BorderRadius.circular(8),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Color(0xFF3D47D1), width: 2),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
+                      child: ClipOval(
                         child:
                             companyLogo.isNotEmpty
                                 ? Image.network(
@@ -659,30 +924,17 @@ class AppliedJobCard extends StatelessWidget {
                                 ),
                       ),
                     ),
-
                     const SizedBox(width: 12),
-
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            companyName,
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ],
+                      child: AutoSizeText(
+                        companyName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                        maxLines: 1,
+                        minFontSize: 10,
+                        overflow: TextOverflow.visible,
                       ),
                     ),
                   ],
@@ -690,7 +942,7 @@ class AppliedJobCard extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // Footer with application details
+                // Footer Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -711,39 +963,35 @@ class AppliedJobCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () async {
-                            try {
-                              await collectionRef.doc(docId).delete();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Application record removed',
-                                    style: GoogleFonts.poppins(),
-                                  ),
-                                  backgroundColor: Colors.redAccent,
-                                ),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Failed to remove: $e',
-                                    style: GoogleFonts.poppins(),
-                                  ),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ],
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () async {
+                        try {
+                          await collectionRef.doc(docId).delete();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Application record removed',
+                                style: GoogleFonts.poppins(),
+                              ),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Failed to remove: $e',
+                                style: GoogleFonts.poppins(),
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -764,17 +1012,16 @@ class AppliedJobCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.deepPurple.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Icon ahead of text
-          Icon(icon, size: 16, color: Colors.deepPurple),
+          Icon(icon, size: 16, color: Colors.black),
           const SizedBox(width: 5), // Spacing between icon and text
           Text(
             text,
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.deepPurple),
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.black),
           ),
         ],
       ),

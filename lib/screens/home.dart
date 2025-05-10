@@ -6,7 +6,6 @@ import 'package:appliedjobs/screens/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
@@ -23,11 +22,10 @@ class _HomePageState extends State<HomePage> {
   final AuthService authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Getter for _pages, it will dynamically return the updated value of 'isJoined'
+  // Getter for _pages
   List<Widget> get _pages => [
-    JobsPage(), // This updates when isJoined changes
+    JobsPage(),
     const AppliedPage(),
-
     const ProfilePage(),
   ];
 
@@ -62,89 +60,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> _joinUser() async {
-    final user = authService.getCurrentUser();
-    if (user != null) {
-      String? newUsername = await _showUsernameDialog();
-
-      if (newUsername != null && newUsername.isNotEmpty) {
-        bool usernameExists = await _checkIfUsernameExists(newUsername);
-
-        if (usernameExists) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text("Username already exists. Try another."),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        } else {
-          try {
-            await _firestore.collection('Users').doc(user.uid).set({
-              'uid': user.uid,
-              'email': user.email,
-              'username': newUsername,
-            });
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text("You're now a Member!"),
-                backgroundColor: Colors.green,
-                duration: const Duration(seconds: 2),
-              ),
-            );
-
-            setState(() {
-              isJoined = true;
-              username = newUsername;
-            });
-          } catch (e) {
-            print("Error adding user to Firestore: $e");
-          }
-        }
-      }
-    }
-  }
-
-  Future<String?> _showUsernameDialog() async {
-    TextEditingController controller = TextEditingController();
-
-    return await showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Enter a username", style: GoogleFonts.poppins()),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(hintText: "Username"),
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(controller.text.trim());
-              },
-              child: const Text("Submit"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<bool> _checkIfUsernameExists(String username) async {
-    QuerySnapshot snapshot =
-        await _firestore
-            .collection('Users')
-            .where('username', isEqualTo: username)
-            .get();
-    return snapshot.docs.isNotEmpty;
-  }
-
   Future<String?> _getProfileImageUrl() async {
     final user = authService.getCurrentUser();
     if (user != null) {
@@ -167,16 +82,19 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              const CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.deepPurple,
-                child: Icon(Icons.check, color: Colors.white),
+              ClipOval(
+                child: Image.asset(
+                  'assets/images/plus.png',
+                  width: 36,
+                  height: 36,
+                  fit: BoxFit.cover,
+                ),
               ),
               const SizedBox(width: 8),
               Text(
                 "AppliedPlus",
                 style: GoogleFonts.poppins(
-                  color: Colors.deepPurple,
+                  color: Color(0xFF3D47D1),
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -184,6 +102,7 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+
         centerTitle: true,
         backgroundColor: const Color(0xFFE0E0E0),
         actions: [
@@ -196,15 +115,14 @@ class _HomePageState extends State<HomePage> {
                 child: GestureDetector(
                   onTap: () {
                     setState(() {
-                      _selectedIndex =
-                          2; // index of 'Profile' tab (corrected from 3)
+                      _selectedIndex = 2; // Profile tab index
                     });
                   },
                   child: Container(
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.deepPurple, width: 2),
+                      border: Border.all(color: Color(0xFF3D47D1), width: 2),
                     ),
                     child: CircleAvatar(
                       radius: 18,
@@ -221,14 +139,18 @@ class _HomePageState extends State<HomePage> {
         automaticallyImplyLeading: false,
       ),
 
-      body: _pages[_selectedIndex], // Use the dynamic getter here
+      body: _pages[_selectedIndex],
 
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(10), // Padding from all sides
+        padding: const EdgeInsets.all(12.0),
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: Colors.grey[400]!, // a light grey border
+              width: 1.0, // you can adjust thickness as needed
+            ),
             boxShadow: [
               BoxShadow(
                 blurRadius: 20,
@@ -239,27 +161,57 @@ class _HomePageState extends State<HomePage> {
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
-            child: GNav(
-              rippleColor: Colors.grey[300]!,
-              hoverColor: Colors.grey[100]!,
-              gap: 8,
-              activeColor: Colors.white,
-              iconSize: 24,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              duration: const Duration(milliseconds: 400),
-              tabBackgroundColor: Colors.deepPurple,
-              color: Colors.black,
-              tabs: const [
-                GButton(icon: Icons.work, text: 'Jobs'),
-                GButton(icon: Icons.assignment_turned_in, text: 'Applied'),
-
-                GButton(icon: Icons.person, text: 'Profile'),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(0, Icons.work_outline, 'Jobs'),
+                _buildNavItem(
+                  1,
+                  Icons.assignment_turned_in_outlined,
+                  'Applied',
+                ),
+                _buildNavItem(2, Icons.person_outline, 'Profile'),
               ],
-              selectedIndex: _selectedIndex,
-              onTabChange: _onItemTapped,
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData icon, String label) {
+    bool isSelected = _selectedIndex == index;
+    return InkWell(
+      onTap: () => _onItemTapped(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Top indicator line when selected
+          Container(
+            height: 3,
+            width: 30,
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFF3D47D1) : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          Icon(
+            icon,
+            color: isSelected ? const Color(0xFF3D47D1) : Colors.black,
+            size: 24,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? const Color(0xFF3D47D1) : Colors.grey,
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontFamily: GoogleFonts.poppins().fontFamily,
+            ),
+          ),
+        ],
       ),
     );
   }

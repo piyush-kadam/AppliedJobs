@@ -1,6 +1,7 @@
 import 'package:appliedjobs/screens/apply.dart';
 import 'package:appliedjobs/screens/platformapply.dart';
 import 'package:appliedjobs/services/api.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -57,6 +58,9 @@ class _JobsPageState extends State<JobsPage>
   List<Map<String, dynamic>> _filteredJobs = [];
   bool _isLoadingCombined = false;
 
+  // Changed from 'late' to nullable with default initialization
+  Future<List<Map<String, dynamic>>>? _matchedJobsFuture;
+
   // ✅ New variable to show immediate loading state when tab is switched to
   bool _showLoadingScreen = true;
 
@@ -76,6 +80,11 @@ class _JobsPageState extends State<JobsPage>
     'OLX',
   ];
 
+  // ✅ New variables to limit the number of fetches for the "Best For You" tab
+  int _bestForYouFetchCount = 0;
+  final int _maxBestForYouFetches = 2;
+  List<Map<String, dynamic>>? _cachedMatchedJobs;
+
   @override
   bool get wantKeepAlive => true; // Keep state when switching tabs
 
@@ -89,10 +98,24 @@ class _JobsPageState extends State<JobsPage>
       _showLoadingScreen = true;
     });
 
+    // Initialize with an empty list to prevent LateInitializationError
+    _matchedJobsFuture = Future.value([]);
+
     // Only load data if not already loaded
     _initializeData();
 
     _scrollController.addListener(_onScroll);
+    // Don't fetch matched jobs immediately, we'll do it after jobs are loaded
+  }
+
+  Future<void> _refreshMatchedJobs() async {
+    // Reset the fetch counter when manually refreshing
+    _bestForYouFetchCount = 0;
+    _cachedMatchedJobs = null;
+    _clearCache();
+    setState(() {
+      _matchedJobsFuture = _getMatchedJobs(); // Re-fetch on pull-to-refresh
+    });
   }
 
   Future<void> _initializeData() async {
@@ -118,6 +141,12 @@ class _JobsPageState extends State<JobsPage>
 
       _isRestoringFromCache = false;
 
+      // Initialize the matched jobs future after data is loaded
+      // Wrap in setState to ensure UI updates
+      setState(() {
+        _matchedJobsFuture = _getMatchedJobs();
+      });
+
       // ✅ Hide loading indicator once data is ready
       if (_isMounted) {
         setState(() {
@@ -134,6 +163,12 @@ class _JobsPageState extends State<JobsPage>
       await _loadBookmarkedJobs();
       await _fetchAppliedJobs();
       await _loadJobs();
+
+      // Initialize the matched jobs future after data is loaded
+      // Wrap in setState to ensure UI updates
+      setState(() {
+        _matchedJobsFuture = _getMatchedJobs();
+      });
 
       // Mark as initially loaded
       hasInitiallyLoaded = true;
@@ -352,6 +387,8 @@ class _JobsPageState extends State<JobsPage>
     cachedCurrentPage = 1;
     cachedHasMore = true;
     hasInitiallyLoaded = false;
+    _cachedMatchedJobs = null;
+    _bestForYouFetchCount = 0;
 
     // ✅ Show loading indicator immediately when refreshing
     setState(() {
@@ -368,14 +405,14 @@ class _JobsPageState extends State<JobsPage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const CircularProgressIndicator(
-            color: Colors.deepPurple,
+            color: Color(0xFF3D47D1),
             strokeWidth: 3,
           ),
           const SizedBox(height: 16),
           Text(
             "Discovering jobs for you...",
             style: GoogleFonts.poppins(
-              color: Colors.deepPurple,
+              color: Color(0xFF3D47D1),
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -419,7 +456,7 @@ class _JobsPageState extends State<JobsPage>
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 20),
             child: Center(
-              child: CircularProgressIndicator(color: Colors.deepPurple),
+              child: CircularProgressIndicator(color: Color(0xFF3D47D1)),
             ),
           );
         }
@@ -436,26 +473,273 @@ class _JobsPageState extends State<JobsPage>
     );
   }
 
-  Future<void> _loadBookmarkedJobs() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFE0E0E0),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Big title text
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: RichText(
+                text: TextSpan(
+                  style: GoogleFonts.poppins(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  children: const [
+                    TextSpan(
+                      text: 'Find Your Dream ',
+                      style: TextStyle(color: Colors.black),
+                    ),
+                    TextSpan(
+                      text: 'Job!!',
+                      style: TextStyle(color: Color(0xFF3D47D1)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Search and filter section
+            Container(
+              color: const Color(0xFFE0E0E0),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  // Search bar
+                  TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search jobs or companies',
+                      hintStyle: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Color(0xFF3D47D1),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _applyFilters();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Platform filter
+                  SizedBox(
+                    height: 40,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children:
+                          _platforms.map((platform) {
+                            final isSelected =
+                                _selectedPlatform == platform ||
+                                (platform == 'All' &&
+                                    _selectedPlatform == null);
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    platform,
+                                    style: GoogleFonts.poppins(
+                                      color:
+                                          isSelected
+                                              ? Colors.white
+                                              : Color(0xFF3D47D1),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                selected: isSelected,
+                                selectedColor: Color(0xFF3D47D1),
+                                backgroundColor: Colors.grey[100],
+                                onSelected: (selected) {
+                                  setState(() {
+                                    _selectedPlatform =
+                                        selected
+                                            ? (platform == 'All'
+                                                ? null
+                                                : platform)
+                                            : null;
+                                    _applyFilters();
+                                  });
+                                },
+                              ),
+                            );
+                          }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Tabs: Recent Jobs and Best For You
+            TabBar(
+              labelColor: Color(0xFF3D47D1),
+              unselectedLabelColor: Colors.black54,
+              labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+              unselectedLabelStyle: GoogleFonts.poppins(),
+              indicatorColor: Color(0xFF3D47D1),
+              tabs: const [Tab(text: "Recent Jobs"), Tab(text: "Best For You")],
+            ),
+
+            // Tab Views
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // 🔹 Recent Jobs Tab
+                  RefreshIndicator(
+                    onRefresh: () async {
+                      _clearCache();
+                    },
+                    child: _buildCombinedJobsList(),
+                  ),
+
+                  // 🔹 Best For You Tab (filtered jobs)
+                  FutureBuilder<List<Map<String, dynamic>>>(
+                    // Use null-safe access with fallback to empty list
+                    future: _matchedJobsFuture ?? Future.value([]),
+                    builder: (context, snapshot) {
+                      if (_filteredJobs.isEmpty || _isLoadingCombined) {
+                        // While filteredJobs are still being loaded
+                        return _buildLoadingIndicator();
+                      }
+
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError ||
+                          !snapshot.hasData ||
+                          snapshot.data!.isEmpty) {
+                        return ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            const SizedBox(height: 200),
+                            Center(
+                              child: Text(
+                                'No matching jobs found',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.grey[600],
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      } else {
+                        final matchedJobs = snapshot.data!;
+                        return RefreshIndicator(
+                          onRefresh: _refreshMatchedJobs,
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: matchedJobs.length,
+                            itemBuilder: (context, index) {
+                              final job = matchedJobs[index];
+                              final isApiJob = job['type'] == JobType.api;
+                              return isApiJob
+                                  ? _buildApiJobCard(job)
+                                  : _buildLocalJobCard(job);
+                            },
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _getMatchedJobs() async {
+    // If we've already fetched the maximum number of times, return the cached results
+    if (_bestForYouFetchCount >= _maxBestForYouFetches &&
+        _cachedMatchedJobs != null) {
+      if (kDebugMode)
+        print(
+          "✅ Using cached Best For You results (fetch count: $_bestForYouFetchCount)",
+        );
+      return _cachedMatchedJobs!;
+    }
+
+    // Make sure we have filtered jobs before proceeding
+    if (_filteredJobs.isEmpty) {
+      if (kDebugMode)
+        print("⚠️ No filtered jobs available yet, returning empty list");
+      return [];
+    }
+
+    // Increment the fetch count
+    _bestForYouFetchCount++;
+    if (kDebugMode)
+      print(
+        "⏳ Fetching Best For You jobs (fetch count: $_bestForYouFetchCount)",
+      );
+
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return [];
 
     try {
-      final snapshot =
+      final userDoc =
           await FirebaseFirestore.instance
               .collection('Users')
-              .doc(user.uid)
-              .collection('bookmarks')
+              .doc(currentUser.uid)
               .get();
 
-      if (mounted) {
-        setState(() {
-          bookmarkedJobIds =
-              snapshot.docs.map((doc) => doc.id.toString()).toSet();
-        });
-      }
+      final about = userDoc.data()?['about']?.toString().toLowerCase() ?? '';
+      final skills = List<String>.from(userDoc.data()?['skills'] ?? []);
+
+      final keywords = {
+        ...skills.map((s) => s.toLowerCase()),
+        ...about.toLowerCase().split(' '),
+      };
+
+      // Filter out empty strings or very short keywords
+      final filteredKeywords = keywords.where((k) => k.length > 2).toSet();
+
+      final matchedJobs =
+          _filteredJobs.where((job) {
+            final jobTitle =
+                (job['title'] ?? job['job_title'])?.toString().toLowerCase() ??
+                '';
+            return filteredKeywords.any(
+              (keyword) => jobTitle.contains(keyword),
+            );
+          }).toList();
+
+      final result = matchedJobs.take(10).toList(); // Limit to 10 results
+
+      // Cache the results
+      _cachedMatchedJobs = result;
+
+      if (kDebugMode) print("✅ Found ${result.length} matched jobs");
+      return result;
     } catch (e) {
-      if (kDebugMode) print("❌ Error loading bookmarks: $e");
+      if (kDebugMode) print("❌ Error in _getMatchedJobs: $e");
+      return [];
     }
   }
 
@@ -482,203 +766,27 @@ class _JobsPageState extends State<JobsPage>
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
+  Future<void> _loadBookmarkedJobs() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFE0E0E0),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10),
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('Users')
+              .doc(user.uid)
+              .collection('bookmarks')
+              .get();
 
-            // Big title text
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: RichText(
-                text: TextSpan(
-                  style: GoogleFonts.poppins(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  children: const [
-                    TextSpan(
-                      text: 'Find Your Dream ',
-                      style: TextStyle(color: Colors.black),
-                    ),
-                    TextSpan(
-                      text: 'Job!!',
-                      style: TextStyle(color: Colors.deepPurple),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Search and filter section
-            Container(
-              color: const Color(0xFFE0E0E0),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                children: [
-                  // Search bar
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search jobs or companies',
-                      hintStyle: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: Colors.deepPurple,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        _applyFilters();
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Platform filter
-                  SizedBox(
-                    height: 40,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children:
-                          _platforms.map((platform) {
-                            final isSelected =
-                                _selectedPlatform == platform ||
-                                (platform == 'All' &&
-                                    _selectedPlatform == null);
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: ChoiceChip(
-                                label: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    platform,
-                                    style: GoogleFonts.poppins(
-                                      color:
-                                          isSelected
-                                              ? Colors.white
-                                              : Colors.deepPurple,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                selected: isSelected,
-                                selectedColor: Colors.deepPurple,
-                                backgroundColor: Colors.grey[100],
-                                onSelected: (selected) {
-                                  setState(() {
-                                    _selectedPlatform =
-                                        selected
-                                            ? (platform == 'All'
-                                                ? null
-                                                : platform)
-                                            : null;
-                                    _applyFilters();
-                                  });
-                                },
-                              ),
-                            );
-                          }).toList(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Tabs: Recent Jobs and Best For You
-            TabBar(
-              labelColor: Colors.deepPurple,
-              unselectedLabelColor: Colors.black54,
-              labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-              unselectedLabelStyle: GoogleFonts.poppins(),
-              indicatorColor: Colors.deepPurple,
-              tabs: const [Tab(text: "Recent Jobs"), Tab(text: "Best For You")],
-            ),
-
-            // Tab Views
-            Expanded(
-              child: TabBarView(
-                children: [
-                  // 🔹 Recent Jobs Tab
-                  RefreshIndicator(
-                    onRefresh: () async {
-                      _clearCache();
-                    },
-                    child: _buildCombinedJobsList(),
-                  ),
-
-                  // 🔹 Best For You Tab (filtered jobs)
-                  FutureBuilder<List<Map<String, dynamic>>>(
-                    future: _getMatchedJobs(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError ||
-                          !snapshot.hasData ||
-                          snapshot.data!.isEmpty) {
-                        return ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: [
-                            const SizedBox(height: 200),
-                            Center(
-                              child: Text(
-                                'No matching jobs found',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.grey[600],
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      } else {
-                        final matchedJobs = snapshot.data!;
-                        return RefreshIndicator(
-                          onRefresh: () async {
-                            _clearCache();
-                          },
-                          child: ListView.builder(
-                            controller: _scrollController,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: matchedJobs.length,
-                            itemBuilder: (context, index) {
-                              final job = matchedJobs[index];
-                              final isApiJob = job['type'] == JobType.api;
-                              return isApiJob
-                                  ? _buildApiJobCard(job)
-                                  : _buildLocalJobCard(job);
-                            },
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+      if (mounted) {
+        setState(() {
+          bookmarkedJobIds =
+              snapshot.docs.map((doc) => doc.id.toString()).toSet();
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) print("❌ Error loading bookmarks: $e");
+    }
   }
 
   void _bookmarkApiJob(Map<String, dynamic> job) async {
@@ -944,30 +1052,6 @@ class _JobsPageState extends State<JobsPage>
   }
 
   // Widget to display info pills for API jobs
-  Future<List<Map<String, dynamic>>> _getMatchedJobs() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return [];
-
-    final userDoc =
-        await FirebaseFirestore.instance
-            .collection('Users')
-            .doc(currentUser.uid)
-            .get();
-
-    final about = userDoc.data()?['about']?.toString().toLowerCase() ?? '';
-    final skills = List<String>.from(userDoc.data()?['skills'] ?? []);
-
-    final keywords = {
-      ...skills.map((s) => s.toLowerCase()),
-      ...about.toLowerCase().split(' '),
-    };
-
-    return _filteredJobs.where((job) {
-      final jobTitle =
-          (job['title'] ?? job['job_title'])?.toString().toLowerCase() ?? '';
-      return keywords.any((keyword) => jobTitle.contains(keyword));
-    }).toList();
-  }
 
   String _cleanTitle(String title) {
     // Removes non-alphanumeric characters except basic punctuation and spaces
@@ -995,138 +1079,149 @@ class _JobsPageState extends State<JobsPage>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 4,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1st Row - Info Pills
               _buildInfoPills(job),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
-              // 2nd Row - Logo + Title + Company
+              // 2nd Row - Title
+              AutoSizeText(
+                _cleanTitle(job['job_title'] ?? 'No Title'),
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.black,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.visible,
+              ),
+              const SizedBox(height: 8),
+
+              // 3rd Row - Circular Logo and Company Name
               Row(
                 children: [
-                  // Company Logo with Border
                   Container(
-                    width: 50,
-                    height: 50,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.deepPurple, width: 1.5),
-                      borderRadius: BorderRadius.circular(8),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Color(0xFF3D47D1), width: 1.2),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                    child: ClipOval(
                       child:
                           companyLogo != null
                               ? Image.network(
                                 companyLogo,
-                                fit: BoxFit.contain,
+                                fit: BoxFit.cover,
                                 errorBuilder:
                                     (ctx, obj, stack) => Image.asset(
                                       'assets/images/office.jpg',
-                                      fit: BoxFit.contain,
+                                      fit: BoxFit.cover,
                                     ),
                               )
                               : Image.asset(
                                 'assets/images/office.jpg',
-                                fit: BoxFit.contain,
+                                fit: BoxFit.cover,
                               ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-
-                  // Title and Company
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _cleanTitle(job['job_title'] ?? 'No Title'),
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Colors.black,
-                          ),
-                        ),
-
-                        const SizedBox(height: 4),
-                        Text(
-                          company,
-                          style: GoogleFonts.poppins(
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                    child: AutoSizeText(
+                      company,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.visible,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
 
-              // 3rd Row - Platform Info + Bookmark + Apply
-              Row(
-                children: [
-                  // Platform Info (Bold "Platform:")
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        style: GoogleFonts.poppins(
-                          color: Colors.black87,
-                          fontSize: 13,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: 'Platform: ',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+              // 4th Row - Platform + Bookmark + Apply
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Platform Info
+                      Expanded(
+                        child: Text(
+                          'Platform: $platform',
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            color: Colors.black87,
                           ),
-                          TextSpan(
-                            text: platform,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Bookmark Icon
-                  IconButton(
-                    icon: Icon(
-                      bookmarkedJobIds.contains(jobId)
-                          ? Icons.bookmark
-                          : Icons.bookmark_border,
-                      color: Colors.deepPurple,
-                    ),
-                    onPressed: () => _bookmarkApiJob(job),
-                  ),
-
-                  // Apply Button
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) =>
-                                  PlatformApplyPage(job: job, isTypeA: true),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
+
+                      // Fixed width for action buttons area for consistent layout
+                      Container(
+                        width: 120,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Bookmark Icon - fixed position
+                            IconButton(
+                              icon: Icon(
+                                bookmarkedJobIds.contains(jobId)
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_border,
+                                color: Color(0xFF3D47D1),
+                              ),
+                              constraints: BoxConstraints(minWidth: 40),
+                              padding: EdgeInsets.zero,
+                              iconSize: 24,
+                              onPressed: () => _bookmarkApiJob(job),
+                            ),
+
+                            // Apply Button - fixed position
+                            SizedBox(
+                              width: 70,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) => PlatformApplyPage(
+                                            job: job,
+                                            isTypeA: true,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF3D47D1),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const FittedBox(child: Text("Apply")),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    child: const Text("Apply"),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -1157,77 +1252,170 @@ class _JobsPageState extends State<JobsPage>
             ),
             elevation: 4,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12), // Match padding with API card
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // First Row: Info Pills
                   _buildInfoPills(job),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
-                  // Second Row: Title and Company
-                  Text(
+                  // Second Row: Title
+                  AutoSizeText(
+                    // Use same AutoSizeText as API card
                     job['title'] ?? 'No Title',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: 14,
                       color: Colors.black,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.visible,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    job['companyName'] ?? 'Unknown Company',
-                    style: GoogleFonts.poppins(
-                      color: Colors.deepPurple,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Third Row: Platform, TimeAgo, Applicants, Bookmark, Apply
+                  const SizedBox(height: 8), // Consistent spacing
+                  // Third Row: Logo and Company Name
                   Row(
                     children: [
-                      Text(
-                        'Platform: AppliedPlus',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-                      ),
-
-                      // Time Ago
-                      SizedBox(width: 24),
-                      // Bookmark Icon
-                      IconButton(
-                        icon: Icon(
-                          isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                          color: Colors.deepPurple,
-                        ),
-                        onPressed: () => _bookmarkLocalJob(jobId, job),
-                      ),
-
-                      // Apply Button
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => Apply(jobId: jobId),
+                      // Company Logo with circular border
+                      if (job['companyLogoUrl'] != null &&
+                          job['companyLogoUrl'].toString().isNotEmpty)
+                        Container(
+                          height: 28, // Match API card size
+                          width: 28, // Match API card size
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Color(0xFF3D47D1),
+                              width: 1.2, // Match API card border width
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
+                          child: ClipOval(
+                            child: Image.network(
+                              job['companyLogoUrl'],
+                              fit: BoxFit.contain, // Match API card fit
+                              errorBuilder:
+                                  (context, error, stackTrace) =>
+                                      const Icon(Icons.broken_image, size: 24),
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          height: 28, // Match API card size
+                          width: 28, // Match API card size
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Color(0xFF3D47D1),
+                              width: 1.2, // Match API card border width
+                            ),
+                          ),
+                          child: const CircleAvatar(
+                            radius: 14,
+                            backgroundColor: Colors.grey,
+                            child: Icon(
+                              Icons.business,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                        child: const Text("Apply"),
+                      const SizedBox(width: 10),
+
+                      // Company Name
+                      Expanded(
+                        child: AutoSizeText(
+                          job['companyName'] ?? 'Unknown Company',
+                          style: GoogleFonts.poppins(
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.visible,
+                        ),
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 8), // Consistent spacing
+                  // Last Row: Platform, Bookmark, Apply - using the same structure as API card
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Platform Info
+                          Expanded(
+                            child: Text(
+                              'Platform: AppliedPlus',
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+
+                          // Fixed width for action buttons area for consistent layout
+                          Container(
+                            width: 120,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                // Bookmark Icon - fixed position
+                                IconButton(
+                                  icon: Icon(
+                                    isBookmarked
+                                        ? Icons.bookmark
+                                        : Icons.bookmark_border,
+                                    color: Color(0xFF3D47D1),
+                                  ),
+                                  constraints: BoxConstraints(minWidth: 40),
+                                  padding: EdgeInsets.zero,
+                                  iconSize: 24,
+                                  onPressed:
+                                      () => _bookmarkLocalJob(jobId, job),
+                                ),
+
+                                // Apply Button - fixed position
+                                SizedBox(
+                                  width: 70,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => Apply(jobId: jobId),
+                                        ),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(0xFF3D47D1),
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(24),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: const FittedBox(
+                                      child: Text("Apply"),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -1282,18 +1470,17 @@ class _JobsPageState extends State<JobsPage>
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.deepPurple.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.deepPurple),
+          Icon(icon, size: 14, color: Colors.black),
           const SizedBox(width: 4),
           Text(
             text,
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.deepPurple,
+              color: Colors.black,
               fontWeight: FontWeight.w500,
             ),
           ),

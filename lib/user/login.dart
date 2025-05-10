@@ -1,3 +1,6 @@
+// Now, let's modify your LoginPage to implement the forgot password functionality
+
+// Modified version of the login.dart file:
 import 'package:appliedjobs/auth/authservice.dart';
 import 'package:appliedjobs/screens/home.dart';
 import 'package:appliedjobs/user/signup.dart';
@@ -19,6 +22,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController resetEmailController = TextEditingController();
 
   bool isLoading = false;
   final AuthService authService = AuthService();
@@ -83,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ],
               ),
-              backgroundColor: Colors.deepPurple,
+              backgroundColor: Color(0xFF3D47D1), // Blue color
               behavior: SnackBarBehavior.floating,
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               shape: RoundedRectangleBorder(
@@ -101,6 +105,152 @@ class _LoginPageState extends State<LoginPage> {
     } finally {
       setState(() => isLoading = false);
     }
+  }
+
+  // Forgot Password
+  void showForgotPasswordDialog() {
+    // Pre-fill with the email from the login field if available
+    resetEmailController.text = emailController.text;
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text(
+              "Reset Password",
+              style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Enter your email address and we'll send you a link to reset your password.",
+                  style: GoogleFonts.poppins(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: resetEmailController,
+                  decoration: InputDecoration(
+                    labelText: "Email",
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel", style: GoogleFonts.poppins()),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    Navigator.pop(context); // Close the dialog
+
+                    // Show loading indicator
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder:
+                          (context) =>
+                              const Center(child: CircularProgressIndicator()),
+                    );
+
+                    await authService.sendPasswordResetEmail(
+                      resetEmailController.text.trim(),
+                    );
+
+                    // Close loading dialog
+                    Navigator.pop(context);
+
+                    // Show success message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(Icons.check_circle, color: Colors.white),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Password reset link sent to ${resetEmailController.text}',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                        backgroundColor: Colors.green,
+                        behavior: SnackBarBehavior.floating,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  } on FirebaseAuthException catch (e) {
+                    // Close loading dialog if open
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    }
+
+                    // Show error message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                e.message ?? 'An error occurred',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF3D47D1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  "Send Reset Link",
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+              ),
+            ],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+    );
   }
 
   @override
@@ -130,23 +280,26 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.deepPurple,
-                        child: Icon(Icons.check, color: Colors.white),
+                      ClipOval(
+                        child: Image.asset(
+                          'assets/images/plus.png',
+                          width: 46,
+                          height: 46,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
                       Text(
                         "Applied Plus",
                         style: GoogleFonts.poppins(
-                          color: Colors.deepPurple,
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
+                          color: Color(0xFF3D47D1),
                         ),
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 30),
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -190,6 +343,7 @@ class _LoginPageState extends State<LoginPage> {
                               "Continue with Google",
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w500,
+                                color: Color(0xFF3D47D1),
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
@@ -247,10 +401,14 @@ class _LoginPageState extends State<LoginPage> {
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: TextButton(
-                              onPressed: () {},
+                              onPressed:
+                                  showForgotPasswordDialog, // Connect to forgot password function
                               child: Text(
                                 "Forgot password?",
-                                style: GoogleFonts.poppins(fontSize: 12),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Color(0xFF3D47D1),
+                                ),
                               ),
                             ),
                             hintText: "••••••••",
@@ -269,7 +427,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: ElevatedButton(
                             onPressed: isLoading ? null : login,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
+                              backgroundColor: Color(0xFF3D47D1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -314,7 +472,7 @@ class _LoginPageState extends State<LoginPage> {
                                   "Sign up",
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
-                                    color: Colors.deepPurple,
+                                    color: Color(0xFF3D47D1),
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),

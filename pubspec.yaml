@@ -55,6 +55,7 @@ dependencies:
   fluttertoast: ^8.0.9
   path_provider: ^2.0.11
   syncfusion_flutter_pdfviewer: ^29.1.39
+  auto_size_text: ^3.0.0
   
   
   
@@ -90,18 +91,23 @@ flutter:
     - assets/images/google.jpg
     - assets/images/splash.png
     - assets/images/logo.png
+    - assets/images/plus.png
+    - assets/images/pluss.png
   #   - images/a_dot_ham.jpeg
 
 flutter_native_splash:
-  color: "#3a27da"
-  image: assets/images/splash.png
+  color: "#ffffff"
+  image: assets/images/pluss.png
   android: true
   ios: true
   fullscreen: true
 
   android_12:
-   color: "#3a27da"
-   image: assets/images/splash.png
+   color: "#ffffff"
+   image: assets/images/pluss.png
    android: true
    ios: true
    fullscreen: true
+
+  android_gravity: center
+  ios_content_mode: scaleAspectFit

@@ -18,7 +18,7 @@ class ResumeViewerPage extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF3D47D1),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),

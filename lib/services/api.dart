@@ -6,7 +6,7 @@ class ApiService {
   static const String _baseUrl = 'https://jsearch.p.rapidapi.com/search';
   static const Map<String, String> _headers = {
     'x-rapidapi-host': 'jsearch.p.rapidapi.com',
-    'x-rapidapi-key': '26eabff549mshbc1da9b88663a9cp106908jsn75a6fb528f94',
+    'x-rapidapi-key': 'd92134e3d5mshef38c656bd4b3e0p1d7d27jsn1144fbdbd509',
   };
 
   /// Fetch jobs one page at a time for lazy loading
