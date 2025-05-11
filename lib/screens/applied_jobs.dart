@@ -526,8 +526,6 @@ class BookmarkJobCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Colors.black),
-          const SizedBox(width: 5),
           Text(
             text,
             style: GoogleFonts.poppins(fontSize: 12, color: Colors.black),
@@ -570,24 +568,24 @@ class BookmarkJobCard extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 4,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1st Row - Info Pills
               _buildInfoPills(job),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // 2nd Row - Job Title (above Logo + Company Row)
               Text(
                 _cleanTitle(jobTitle),
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 14,
                   color: Colors.black,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 5),
 
               // 3rd Row - Logo + Company (in one row)
               Row(
@@ -621,16 +619,16 @@ class BookmarkJobCard extends StatelessWidget {
                               ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 5),
 
                   // Company Name with AutoSizeText
                   Expanded(
                     child: AutoSizeText(
                       company,
                       style: GoogleFonts.poppins(
-                        color: Color(0xFF3D47D1),
+                        color: Colors.grey[700],
                         fontWeight: FontWeight.w500,
-                        fontSize: 16, // Same font size as the logo size
+                        fontSize: 14, // Same font size as the logo size
                       ),
                       maxLines: 1, // Ensure it's in one line
                       minFontSize: 10, // Minimum font size when text overflows
@@ -641,7 +639,7 @@ class BookmarkJobCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 5),
 
               // 4th Row - Platform Info + Bookmark + Apply
               Row(
@@ -876,7 +874,7 @@ class AppliedJobCard extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
                 // Row 1: Job Title
                 AutoSizeText(
@@ -939,8 +937,6 @@ class AppliedJobCard extends StatelessWidget {
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 12),
 
                 // Footer Row
                 Row(
@@ -1016,9 +1012,6 @@ class AppliedJobCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Icon ahead of text
-          Icon(icon, size: 16, color: Colors.black),
-          const SizedBox(width: 5), // Spacing between icon and text
           Text(
             text,
             style: GoogleFonts.poppins(fontSize: 12, color: Colors.black),

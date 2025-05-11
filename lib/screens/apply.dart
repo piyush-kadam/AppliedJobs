@@ -203,7 +203,7 @@ class _ApplyState extends State<Apply> {
               color: Colors.white,
             ),
           ),
-          backgroundColor: primaryColor,
+          backgroundColor: Color(0xFF3D47D1),
           elevation: 0,
         ),
         body: Center(child: CircularProgressIndicator(color: primaryColor)),
@@ -243,7 +243,7 @@ class _ApplyState extends State<Apply> {
             color: Colors.white,
           ),
         ),
-        backgroundColor: primaryColor,
+        backgroundColor: Color(0xFF3D47D1),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -300,7 +300,7 @@ class _ApplyState extends State<Apply> {
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitApplication,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
+                      backgroundColor: Color(0xFF3D47D1),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -435,16 +435,16 @@ class _ApplyState extends State<Apply> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.1),
+                          color: Color(0xFF3D47D1).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: primaryColor.withOpacity(0.3),
+                            color: Color(0xFF3D47D1).withOpacity(0.3),
                           ),
                         ),
                         child: Text(
                           skill,
                           style: GoogleFonts.poppins(
-                            color: primaryColor,
+                            color: Color(0xFF3D47D1),
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -649,7 +649,7 @@ class _ApplyState extends State<Apply> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.description, color: primaryColor, size: 24),
+                  Icon(Icons.description, color: Color(0xFF3D47D1), size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -673,11 +673,15 @@ class _ApplyState extends State<Apply> {
                         ),
                       );
                     },
-                    icon: Icon(Icons.visibility, color: primaryColor, size: 18),
+                    icon: Icon(
+                      Icons.visibility,
+                      color: Color(0xFF3D47D1),
+                      size: 18,
+                    ),
                     label: Text(
                       'View',
                       style: GoogleFonts.poppins(
-                        color: primaryColor,
+                        color: Color(0xFF3D47D1),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
