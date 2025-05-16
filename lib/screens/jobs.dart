@@ -1,3 +1,4 @@
+import 'package:appliedjobs/models/filter_model.dart';
 import 'package:appliedjobs/screens/apply.dart';
 import 'package:appliedjobs/screens/platformapply.dart';
 import 'package:appliedjobs/services/api.dart';
@@ -28,7 +29,18 @@ enum JobType {
 }
 
 class JobsPage extends StatefulWidget {
-  const JobsPage({super.key});
+  final void Function({
+    required JobFilters currentFilters,
+    required void Function(JobFilters) onApply,
+    required void Function() onClear,
+    required List<String> uniqueRoles,
+    required List<String> uniqueLocations,
+    required List<String> uniqueCompanies,
+  })?
+  showFilterBox;
+  final JobFilters currentFilters;
+  const JobsPage({Key? key, this.showFilterBox, required this.currentFilters})
+    : super(key: key);
 
   @override
   State<JobsPage> createState() => _JobsPageState();
@@ -36,6 +48,9 @@ class JobsPage extends StatefulWidget {
 
 class _JobsPageState extends State<JobsPage>
     with AutomaticKeepAliveClientMixin {
+  JobFilters _currentFilters = JobFilters();
+  bool _showFilterBox = false;
+
   // For API jobs (Type A)
   final List<dynamic> _apiJobs = [];
   final ScrollController _scrollController = ScrollController();
@@ -289,20 +304,228 @@ class _JobsPageState extends State<JobsPage>
     _applyFilters();
   }
 
+  // void _applyFilters() {
+  //   // Start with all jobs
+  //   _filteredJobs = List.from(_combinedJobs);
+
+  //   final searchQuery = _searchController.text.toLowerCase();
+  //   // Job Role filter
+  //   if (_currentFilters.jobRole != null &&
+  //       _currentFilters.jobRole!.isNotEmpty) {
+  //     _filteredJobs =
+  //         _filteredJobs.where((job) {
+  //           final title =
+  //               (job['title'] ?? job['job_title'] ?? '')
+  //                   .toString()
+  //                   .toLowerCase();
+  //           return title.contains(_currentFilters.jobRole!.toLowerCase());
+  //         }).toList();
+  //   }
+
+  //   // Location filter
+  //   if (_currentFilters.location != null &&
+  //       _currentFilters.location!.isNotEmpty) {
+  //     _filteredJobs =
+  //         _filteredJobs.where((job) {
+  //           final location =
+  //               (job['location'] ?? job['job_city'] ?? job['job_country'] ?? '')
+  //                   .toString()
+  //                   .toLowerCase();
+  //           return location.contains(_currentFilters.location!.toLowerCase());
+  //         }).toList();
+  //   }
+
+  //   // Application Status filter
+  //   if (_currentFilters.applicationStatus != null &&
+  //       _currentFilters.applicationStatus != 'All Jobs') {
+  //     // You need to decide how to track application status per job
+  //     // For example, check if job['id'] is in appliedJobIds
+  //     if (_currentFilters.applicationStatus == 'Applied') {
+  //       _filteredJobs =
+  //           _filteredJobs
+  //               .where(
+  //                 (job) => appliedJobIds.contains(job['id'] ?? job['job_id']),
+  //               )
+  //               .toList();
+  //     } else if (_currentFilters.applicationStatus == 'Not Applied') {
+  //       _filteredJobs =
+  //           _filteredJobs
+  //               .where(
+  //                 (job) => !appliedJobIds.contains(job['id'] ?? job['job_id']),
+  //               )
+  //               .toList();
+  //     }
+  //   }
+
+  //   // Companies filter
+  //   if (_currentFilters.companies.isNotEmpty) {
+  //     _filteredJobs =
+  //         _filteredJobs.where((job) {
+  //           final company =
+  //               (job['companyName'] ?? job['employer_name'] ?? '').toString();
+  //           return _currentFilters.companies.contains(company);
+  //         }).toList();
+  //   }
+
+  //   // Job Type filter
+  //   if (_currentFilters.jobTypes.isNotEmpty) {
+  //     _filteredJobs =
+  //         _filteredJobs.where((job) {
+  //           final type =
+  //               (job['employmentType'] ??
+  //                       job['job_type'] ??
+  //                       job['job_description'] ??
+  //                       '')
+  //                   .toString()
+  //                   .toLowerCase();
+  //           return _currentFilters.jobTypes.any(
+  //             (t) => type.contains(t.toLowerCase()),
+  //           );
+  //         }).toList();
+  //   }
+
+  //   // Apply platform filter
+  //   if (_selectedPlatform != null && _selectedPlatform != 'All') {
+  //     if (_selectedPlatform == 'AppliedPlus') {
+  //       // Filter for local jobs only
+  //       _filteredJobs =
+  //           _filteredJobs.where((job) => job['type'] == JobType.local).toList();
+  //     } else {
+  //       // Filter for API jobs with matching platform
+  //       _filteredJobs =
+  //           _filteredJobs.where((job) {
+  //             if (job['type'] == JobType.api) {
+  //               final jobPublisher =
+  //                   (job['job_publisher'] ?? '').toString().toLowerCase();
+  //               return jobPublisher.contains(_selectedPlatform!.toLowerCase());
+  //             }
+  //             return false;
+  //           }).toList();
+  //     }
+  //   }
+
+  //   // Apply search filter if there's a search query
+  //   if (searchQuery.isNotEmpty) {
+  //     _filteredJobs =
+  //         _filteredJobs.where((job) {
+  //           if (job['type'] == JobType.api) {
+  //             final title = (job['job_title'] ?? '').toString().toLowerCase();
+  //             final company =
+  //                 (job['employer_name'] ?? '').toString().toLowerCase();
+  //             return title.contains(searchQuery) ||
+  //                 company.contains(searchQuery);
+  //           } else {
+  //             final title = (job['title'] ?? '').toString().toLowerCase();
+  //             final company =
+  //                 (job['companyName'] ?? '').toString().toLowerCase();
+  //             final location = (job['location'] ?? '').toString().toLowerCase();
+  //             return title.contains(searchQuery) ||
+  //                 company.contains(searchQuery) ||
+  //                 location.contains(searchQuery);
+  //           }
+  //         }).toList();
+  //   }
+  // }
+
   void _applyFilters() {
-    // Start with all jobs
     _filteredJobs = List.from(_combinedJobs);
 
     final searchQuery = _searchController.text.toLowerCase();
 
-    // Apply platform filter
+    // Job Role filter
+    if (_currentFilters.jobRole != null &&
+        _currentFilters.jobRole!.isNotEmpty &&
+        _currentFilters.jobRole != 'All Roles') {
+      _filteredJobs =
+          _filteredJobs.where((job) {
+            final title =
+                (job['title'] ?? job['job_title'] ?? '')
+                    .toString()
+                    .toLowerCase();
+            return title.contains(_currentFilters.jobRole!.toLowerCase());
+          }).toList();
+    }
+
+    // Location filter
+    if (_currentFilters.location != null &&
+        _currentFilters.location!.isNotEmpty &&
+        _currentFilters.location != 'All Cities') {
+      _filteredJobs =
+          _filteredJobs.where((job) {
+            // Try all possible location fields and also try to extract from description
+            final locationFields = [
+              (job['location'] ?? '').toString().toLowerCase(),
+              (job['job_city'] ?? '').toString().toLowerCase(),
+              (job['job_country'] ?? '').toString().toLowerCase(),
+              job['job_description'] != null
+                  ? _extractLocationFromDesc(
+                        job['job_description'].toString().toLowerCase(),
+                      ) ??
+                      ''
+                  : '',
+            ];
+            return locationFields.any(
+              (loc) => loc.contains(_currentFilters.location!.toLowerCase()),
+            );
+          }).toList();
+    }
+
+    // Application Status filter
+    if (_currentFilters.applicationStatus != null &&
+        _currentFilters.applicationStatus != 'All Jobs') {
+      if (_currentFilters.applicationStatus == 'Applied') {
+        _filteredJobs =
+            _filteredJobs
+                .where(
+                  (job) => appliedJobIds.contains(job['id'] ?? job['job_id']),
+                )
+                .toList();
+      } else if (_currentFilters.applicationStatus == 'Not Applied') {
+        _filteredJobs =
+            _filteredJobs
+                .where(
+                  (job) => !appliedJobIds.contains(job['id'] ?? job['job_id']),
+                )
+                .toList();
+      }
+    }
+
+    // Companies filter
+    if (_currentFilters.companies.isNotEmpty) {
+      _filteredJobs =
+          _filteredJobs.where((job) {
+            final company =
+                (job['companyName'] ?? job['employer_name'] ?? '').toString();
+            return _currentFilters.companies.contains(company);
+          }).toList();
+    }
+
+    // Job Type filter
+    if (_currentFilters.jobTypes.isNotEmpty) {
+      _filteredJobs =
+          _filteredJobs.where((job) {
+            // Try all possible job type fields, including extracting from description
+            final jobTypeFields = [
+              (job['employmentType'] ?? '').toString().toLowerCase(),
+              (job['job_type'] ?? '').toString().toLowerCase(),
+              job['job_description'] != null
+                  ? (_extractJobType(job['job_description'].toString()) ?? '')
+                      .toLowerCase()
+                  : '',
+            ];
+            return _currentFilters.jobTypes.any(
+              (t) =>
+                  jobTypeFields.any((field) => field.contains(t.toLowerCase())),
+            );
+          }).toList();
+    }
+
+    // Platform filter
     if (_selectedPlatform != null && _selectedPlatform != 'All') {
       if (_selectedPlatform == 'AppliedPlus') {
-        // Filter for local jobs only
         _filteredJobs =
             _filteredJobs.where((job) => job['type'] == JobType.local).toList();
       } else {
-        // Filter for API jobs with matching platform
         _filteredJobs =
             _filteredJobs.where((job) {
               if (job['type'] == JobType.api) {
@@ -315,7 +538,7 @@ class _JobsPageState extends State<JobsPage>
       }
     }
 
-    // Apply search filter if there's a search query
+    // Search query
     if (searchQuery.isNotEmpty) {
       _filteredJobs =
           _filteredJobs.where((job) {
@@ -323,8 +546,13 @@ class _JobsPageState extends State<JobsPage>
               final title = (job['job_title'] ?? '').toString().toLowerCase();
               final company =
                   (job['employer_name'] ?? '').toString().toLowerCase();
+              final location =
+                  (job['job_city'] ?? job['job_country'] ?? '')
+                      .toString()
+                      .toLowerCase();
               return title.contains(searchQuery) ||
-                  company.contains(searchQuery);
+                  company.contains(searchQuery) ||
+                  location.contains(searchQuery);
             } else {
               final title = (job['title'] ?? '').toString().toLowerCase();
               final company =
@@ -507,89 +735,127 @@ class _JobsPageState extends State<JobsPage>
               ),
             ),
 
-            // Search and filter section
-            Container(
-              color: const Color(0xFFE0E0E0),
+            // Search and filter row
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
+              child: Row(
                 children: [
                   // Search bar
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search jobs or companies',
-                      hintStyle: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.grey,
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search jobs or companies',
+                        hintStyle: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xFF3D47D1),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
                       ),
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: Color(0xFF3D47D1),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      onChanged: (value) {
+                        setState(() {
+                          _applyFilters();
+                        });
+                      },
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        _applyFilters();
-                      });
-                    },
                   ),
-                  const SizedBox(height: 8),
-
-                  // Platform filter
-                  SizedBox(
-                    height: 40,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children:
-                          _platforms.map((platform) {
-                            final isSelected =
-                                _selectedPlatform == platform ||
-                                (platform == 'All' &&
-                                    _selectedPlatform == null);
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: ChoiceChip(
-                                label: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    platform,
-                                    style: GoogleFonts.poppins(
-                                      color:
-                                          isSelected
-                                              ? Colors.white
-                                              : Color(0xFF3D47D1),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                selected: isSelected,
-                                selectedColor: Color(0xFF3D47D1),
-                                backgroundColor: Colors.grey[100],
-                                onSelected: (selected) {
-                                  setState(() {
-                                    _selectedPlatform =
-                                        selected
-                                            ? (platform == 'All'
-                                                ? null
-                                                : platform)
-                                            : null;
-                                    _applyFilters();
-                                  });
-                                },
-                              ),
-                            );
-                          }).toList(),
+                  const SizedBox(width: 12),
+                  // Filter button
+                  GestureDetector(
+                    onTap: () {
+                      if (widget.showFilterBox != null) {
+                        widget.showFilterBox!(
+                          currentFilters: _currentFilters,
+                          onApply: (filters) {
+                            setState(() {
+                              _currentFilters = filters;
+                              _applyFilters();
+                            });
+                          },
+                          onClear: () {
+                            setState(() {
+                              _currentFilters = JobFilters();
+                              _applyFilters();
+                            });
+                          },
+                          uniqueRoles: _getUniqueRoles(),
+                          uniqueLocations: _getUniqueLocations(),
+                          uniqueCompanies: _getUniqueCompanies(),
+                        );
+                      }
+                    },
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF3D47D1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.filter_alt_outlined,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ],
+              ),
+            ),
+
+            // Platform filter
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children:
+                    _platforms.map((platform) {
+                      final isSelected =
+                          _selectedPlatform == platform ||
+                          (platform == 'All' && _selectedPlatform == null);
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              platform,
+                              style: GoogleFonts.poppins(
+                                color:
+                                    isSelected
+                                        ? Colors.white
+                                        : Color(0xFF3D47D1),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          selected: isSelected,
+                          selectedColor: Color(0xFF3D47D1),
+                          backgroundColor: Colors.grey[100],
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedPlatform =
+                                  selected
+                                      ? (platform == 'All' ? null : platform)
+                                      : null;
+                              _applyFilters();
+                            });
+                          },
+                        ),
+                      );
+                    }).toList(),
               ),
             ),
 
@@ -607,24 +873,20 @@ class _JobsPageState extends State<JobsPage>
             Expanded(
               child: TabBarView(
                 children: [
-                  // 🔹 Recent Jobs Tab
+                  // Recent Jobs Tab
                   RefreshIndicator(
                     onRefresh: () async {
                       _clearCache();
                     },
                     child: _buildCombinedJobsList(),
                   ),
-
-                  // 🔹 Best For You Tab (filtered jobs)
+                  // Best For You Tab (filtered jobs)
                   FutureBuilder<List<Map<String, dynamic>>>(
-                    // Use null-safe access with fallback to empty list
                     future: _matchedJobsFuture ?? Future.value([]),
                     builder: (context, snapshot) {
                       if (_filteredJobs.isEmpty || _isLoadingCombined) {
-                        // While filteredJobs are still being loaded
                         return _buildLoadingIndicator();
                       }
-
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       } else if (snapshot.hasError ||
@@ -672,6 +934,37 @@ class _JobsPageState extends State<JobsPage>
         ),
       ),
     );
+  }
+
+  // Helper methods to extract unique filter values
+  List<String> _getUniqueRoles() {
+    final roles = <String>{};
+    for (final job in _combinedJobs) {
+      final title = (job['title'] ?? job['job_title'] ?? '').toString();
+      if (title.isNotEmpty) roles.add(title);
+    }
+    return roles.toList();
+  }
+
+  List<String> _getUniqueLocations() {
+    final locations = <String>{};
+    for (final job in _combinedJobs) {
+      final location =
+          (job['location'] ?? job['job_city'] ?? job['job_country'] ?? '')
+              .toString();
+      if (location.isNotEmpty) locations.add(location);
+    }
+    return locations.toList();
+  }
+
+  List<String> _getUniqueCompanies() {
+    final companies = <String>{};
+    for (final job in _combinedJobs) {
+      final company =
+          (job['companyName'] ?? job['employer_name'] ?? '').toString();
+      if (company.isNotEmpty) companies.add(company);
+    }
+    return companies.toList();
   }
 
   Future<List<Map<String, dynamic>>> _getMatchedJobs() async {
@@ -992,9 +1285,12 @@ class _JobsPageState extends State<JobsPage>
             : null);
   }
 
+
+
   String? _extractLocationFromDesc(String description) {
     final locationMatch = RegExp(
-      r'Location:\s*([^,\n]+)',
+      r'location:\s*([^,\n]+)',
+      caseSensitive: false,
     ).firstMatch(description);
     return locationMatch?.group(1)?.trim();
   }
