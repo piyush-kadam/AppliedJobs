@@ -1211,37 +1211,31 @@ class _JobsPageState extends State<JobsPage>
 
       // Add job type pill if available
       if (jobType != null) {
-        pills.add(_buildInfoPill(jobType, Icons.work));
+        pills.add(_buildInfoPill(jobType));
       }
 
       // Add location pill if available
       if (location != null) {
-        pills.add(_buildInfoPill(location, Icons.location_on));
+        pills.add(_buildInfoPill(location));
       }
 
       // Add salary pill if available
       if (salary != null) {
-        pills.add(_buildInfoPill(salary, Icons.attach_money));
+        pills.add(_buildInfoPill(salary));
       }
 
       // Add experience pill if available
       if (experience != null) {
-        pills.add(_buildInfoPill(experience, Icons.star));
+        pills.add(_buildInfoPill(experience));
       }
     } else {
       // For local jobs
-      pills.add(
-        _buildInfoPill(job['employmentType'] ?? 'Full-time', Icons.work),
-      );
-      pills.add(_buildInfoPill(job['location'] ?? 'Remote', Icons.location_on));
-      pills.add(
-        _buildInfoPill(
-          job['salaryRange'] ?? 'Salary not specified',
-          Icons.attach_money,
-        ),
-      );
+      pills.add(_buildInfoPill(job['employmentType'] ?? 'Full-time'));
+      pills.add(_buildInfoPill(job['location'] ?? 'Remote'));
+      pills.add(_buildInfoPill(job['salaryRange'] ?? 'Salary not specified'));
+
       if (job['experienceLevel'] != null) {
-        pills.add(_buildInfoPill(job['experienceLevel'], Icons.star));
+        pills.add(_buildInfoPill(job['experienceLevel']));
       }
     }
 
@@ -1252,6 +1246,25 @@ class _JobsPageState extends State<JobsPage>
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(children: pills),
+    );
+  }
+
+  Widget _buildInfoPill(String text) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          color: Colors.black,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 
@@ -1284,8 +1297,6 @@ class _JobsPageState extends State<JobsPage>
             ? _extractLocationFromDesc(job['job_description'])
             : null);
   }
-
-
 
   String? _extractLocationFromDesc(String description) {
     final locationMatch = RegExp(
@@ -1757,31 +1768,5 @@ class _JobsPageState extends State<JobsPage>
       if (kDebugMode) print('Error getting applicant count: $e');
       return 0;
     }
-  }
-
-  Widget _buildInfoPill(String text, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.black),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.black,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
