@@ -142,6 +142,7 @@ class _AppliedPageState extends State<AppliedPage>
   }
 }
 
+// BookmarksTab widget
 class BookmarksTab extends StatelessWidget {
   final String userId;
   final String searchQuery;
@@ -188,7 +189,6 @@ class BookmarksTab extends StatelessWidget {
           );
         }
 
-        // Filter jobs based on search query
         final filteredDocs =
             searchQuery.isEmpty
                 ? docs
@@ -214,9 +214,7 @@ class BookmarksTab extends StatelessWidget {
                           ? (job['job_publisher'] ?? '')
                               .toString()
                               .toLowerCase()
-                          : (job['employmentType'] ?? '')
-                              .toString()
-                              .toLowerCase();
+                          : 'applied plus';
 
                   return jobTitle.contains(searchQuery) ||
                       company.contains(searchQuery) ||
@@ -246,8 +244,8 @@ class BookmarksTab extends StatelessWidget {
                     : job['companyName'] ?? 'Unknown Company';
             final publisher =
                 isTypeA
-                    ? "Platform: ${job['job_publisher'] ?? 'Unknown'}"
-                    : "Type: ${job['employmentType'] ?? 'Unknown'}";
+                    ? 'Platform: ${(job['job_publisher'] ?? '').toString().toLowerCase()}'
+                    : 'Platform: AppliedPlus';
             final hasLogo = isTypeA && job['employer_logo'] != null;
 
             return BookmarkJobCard(
@@ -259,104 +257,6 @@ class BookmarksTab extends StatelessWidget {
               hasLogo: hasLogo,
               isTypeA: isTypeA,
               collectionRef: bookmarksRef,
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class AppliedJobsTab extends StatelessWidget {
-  final String userId;
-  final String searchQuery;
-
-  const AppliedJobsTab({
-    super.key,
-    required this.userId,
-    required this.searchQuery,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final appliedJobsRef = FirebaseFirestore.instance
-        .collection('Users')
-        .doc(userId)
-        .collection('appliedjobs');
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: appliedJobsRef.orderBy('appliedAt', descending: true).snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF3D47D1)),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Error: ${snapshot.error}',
-              style: GoogleFonts.poppins(color: Colors.black),
-            ),
-          );
-        }
-
-        final docs = snapshot.data?.docs ?? [];
-
-        if (docs.isEmpty) {
-          return Center(
-            child: Text(
-              'No applied jobs.',
-              style: GoogleFonts.poppins(color: Colors.black),
-            ),
-          );
-        }
-
-        // Filter jobs based on search query
-        final filteredDocs =
-            searchQuery.isEmpty
-                ? docs
-                : docs.where((doc) {
-                  final job = doc.data() as Map<String, dynamic>;
-                  final title =
-                      (job['title'] ?? 'No Title').toString().toLowerCase();
-                  final companyName =
-                      (job['companyName'] ?? 'Unknown Company')
-                          .toString()
-                          .toLowerCase();
-                  final employmentType =
-                      (job['employmentType'] ?? '').toString().toLowerCase();
-                  final location =
-                      (job['location'] ?? '').toString().toLowerCase();
-                  final experienceLevel =
-                      (job['experienceLevel'] ?? '').toString().toLowerCase();
-
-                  return title.contains(searchQuery) ||
-                      companyName.contains(searchQuery) ||
-                      employmentType.contains(searchQuery) ||
-                      location.contains(searchQuery) ||
-                      experienceLevel.contains(searchQuery);
-                }).toList();
-
-        if (filteredDocs.isEmpty) {
-          return Center(
-            child: Text(
-              'No matching applied jobs found.',
-              style: GoogleFonts.poppins(color: Colors.black),
-            ),
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(12),
-          itemCount: filteredDocs.length,
-          itemBuilder: (context, index) {
-            final job = filteredDocs[index].data() as Map<String, dynamic>;
-            return AppliedJobCard(
-              job: job,
-              docId: filteredDocs[index].id,
-              collectionRef: appliedJobsRef,
             );
           },
         );
@@ -431,7 +331,7 @@ class BookmarkJobCard extends StatelessWidget {
     if (description == null) return null;
 
     final salaryRegex = RegExp(
-      r'(\$\d+[\d,.]*\s*[-–]\s*\$?\d+[\d,.]*\s*(k|K|thousand|million)?|(\$\d+[\d,.]*\s*(k|K|thousand|million)?(\s*per\s*(year|month|hour|annum)))|(salary:?\s*\$\d+[\d,.]*\s*[-–]\s*\$?\d+[\d,.]*))',
+      r'(\$\d+[\d,.]\s[-–]\s*\$?\d+[\d,.]\s(k|K|thousand|million)?|(\$\d+[\d,.]\s(k|K|thousand|million)?(\s*per\s*(year|month|hour|annum)))|(salary:?\s*\$\d+[\d,.]\s[-–]\s*\$?\d+[\d,.]*))',
       caseSensitive: false,
     );
     final match = salaryRegex.firstMatch(description);
@@ -541,205 +441,302 @@ class BookmarkJobCard extends StatelessWidget {
     return title;
   }
 
+  Future<String?> _getCompanyLogoUrl() async {
+    try {
+      final doc =
+          await FirebaseFirestore.instance.collection('Jobs').doc(docId).get();
+      return doc.data()?['companyLogoUrl'];
+    } catch (e) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final companyLogo = hasLogo ? job['employer_logo'] : null;
 
-    return InkWell(
-      onTap: () {
-        if (isTypeA) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) => PlatformApplyPage(job: job, isTypeA: isTypeA),
+    return FutureBuilder<String?>(
+      future: isTypeA ? Future.value(companyLogo) : _getCompanyLogoUrl(),
+      builder: (context, snapshot) {
+        final logoUrl = snapshot.data;
+        return InkWell(
+          onTap: () {
+            if (isTypeA) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) =>
+                          PlatformApplyPage(job: job, isTypeA: isTypeA),
+                ),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Apply(jobId: docId)),
+              );
+            }
+          },
+          child: Card(
+            color: Colors.white,
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-          );
-        } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => Apply(jobId: docId)),
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInfoPills(job),
+                  const SizedBox(height: 8),
+                  Text(
+                    _cleanTitle(jobTitle),
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        height: 32,
+                        width: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Color(0xFF3D47D1),
+                            width: 2,
+                          ),
+                        ),
+                        child: ClipOval(
+                          child:
+                              (logoUrl ?? '').isNotEmpty
+                                  ? Image.network(
+                                    logoUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Image.asset(
+                                        'assets/images/office.jpg',
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
+                                  )
+                                  : Image.asset(
+                                    'assets/images/office.jpg',
+                                    fit: BoxFit.cover,
+                                  ),
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: AutoSizeText(
+                          company,
+                          style: GoogleFonts.poppins(
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          minFontSize: 10,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          publisher,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.bookmark,
+                          color: Color(0xFF3D47D1),
+                        ),
+                        onPressed: () async {
+                          try {
+                            await collectionRef.doc(docId).delete();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Bookmark removed',
+                                  style: GoogleFonts.poppins(),
+                                ),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Failed to remove bookmark: $e',
+                                  style: GoogleFonts.poppins(),
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (isTypeA) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => PlatformApplyPage(
+                                      job: job,
+                                      isTypeA: isTypeA,
+                                    ),
+                              ),
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => Apply(jobId: docId),
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF3D47D1),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                        child: Text(
+                          "Apply",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class AppliedJobsTab extends StatelessWidget {
+  final String userId;
+  final String searchQuery;
+
+  const AppliedJobsTab({
+    super.key,
+    required this.userId,
+    required this.searchQuery,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final appliedJobsRef = FirebaseFirestore.instance
+        .collection('Users')
+        .doc(userId)
+        .collection('appliedjobs');
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: appliedJobsRef.orderBy('appliedAt', descending: true).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3D47D1)),
           );
         }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error: ${snapshot.error}',
+              style: GoogleFonts.poppins(color: Colors.black),
+            ),
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+
+        if (docs.isEmpty) {
+          return Center(
+            child: Text(
+              'No applied jobs.',
+              style: GoogleFonts.poppins(color: Colors.black),
+            ),
+          );
+        }
+
+        // Filter jobs based on search query
+        final filteredDocs =
+            searchQuery.isEmpty
+                ? docs
+                : docs.where((doc) {
+                  final job = doc.data() as Map<String, dynamic>;
+                  final title =
+                      (job['title'] ?? 'No Title').toString().toLowerCase();
+                  final companyName =
+                      (job['companyName'] ?? 'Unknown Company')
+                          .toString()
+                          .toLowerCase();
+                  final employmentType =
+                      (job['employmentType'] ?? '').toString().toLowerCase();
+                  final location =
+                      (job['location'] ?? '').toString().toLowerCase();
+                  final experienceLevel =
+                      (job['experienceLevel'] ?? '').toString().toLowerCase();
+
+                  return title.contains(searchQuery) ||
+                      companyName.contains(searchQuery) ||
+                      employmentType.contains(searchQuery) ||
+                      location.contains(searchQuery) ||
+                      experienceLevel.contains(searchQuery);
+                }).toList();
+
+        if (filteredDocs.isEmpty) {
+          return Center(
+            child: Text(
+              'No matching applied jobs found.',
+              style: GoogleFonts.poppins(color: Colors.black),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: filteredDocs.length,
+          itemBuilder: (context, index) {
+            final job = filteredDocs[index].data() as Map<String, dynamic>;
+            return AppliedJobCard(
+              job: job,
+              docId: filteredDocs[index].id,
+              collectionRef: appliedJobsRef,
+            );
+          },
+        );
       },
-      child: Card(
-        color: Colors.white,
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 4,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1st Row - Info Pills
-              _buildInfoPills(job),
-              const SizedBox(height: 8),
-
-              // 2nd Row - Job Title (above Logo + Company Row)
-              Text(
-                _cleanTitle(jobTitle),
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 5),
-
-              // 3rd Row - Logo + Company (in one row)
-              Row(
-                crossAxisAlignment:
-                    CrossAxisAlignment.center, // Align logo and text properly
-                children: [
-                  // Company Logo with Circular Border, size based on text size
-                  Container(
-                    height: 32,
-                    width: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Color(0xFF3D47D1), width: 2),
-                    ),
-                    child: ClipOval(
-                      child:
-                          companyLogo.isNotEmpty
-                              ? Image.network(
-                                companyLogo,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Image.asset(
-                                    'assets/images/office.jpg',
-                                    fit: BoxFit.contain,
-                                  );
-                                },
-                              )
-                              : Image.asset(
-                                'assets/images/office.jpg',
-                                fit: BoxFit.cover,
-                              ),
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-
-                  // Company Name with AutoSizeText
-                  Expanded(
-                    child: AutoSizeText(
-                      company,
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14, // Same font size as the logo size
-                      ),
-                      maxLines: 1, // Ensure it's in one line
-                      minFontSize: 10, // Minimum font size when text overflows
-                      overflow:
-                          TextOverflow
-                              .ellipsis, // Add ellipsis when text overflows
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
-
-              // 4th Row - Platform Info + Bookmark + Apply
-              Row(
-                children: [
-                  // Platform Info (Bold "Platform:")
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        style: GoogleFonts.poppins(
-                          color: Colors.black87,
-                          fontSize: 13,
-                        ),
-                        children: [
-                          const TextSpan(
-                            text: '',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(
-                            text: publisher,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Bookmark Icon
-                  IconButton(
-                    icon: const Icon(Icons.bookmark, color: Color(0xFF3D47D1)),
-                    onPressed: () async {
-                      try {
-                        await collectionRef.doc(docId).delete();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Bookmark removed',
-                              style: GoogleFonts.poppins(),
-                            ),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Failed to remove bookmark: $e',
-                              style: GoogleFonts.poppins(),
-                            ),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    },
-                  ),
-
-                  // Apply Button
-                  ElevatedButton(
-                    onPressed: () {
-                      if (isTypeA) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => PlatformApplyPage(
-                                  job: job,
-                                  isTypeA: isTypeA,
-                                ),
-                          ),
-                        );
-                      } else {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Apply(jobId: docId),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF3D47D1),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: Text(
-                      "Apply",
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -905,7 +902,7 @@ class AppliedJobCard extends StatelessWidget {
                       ),
                       child: ClipOval(
                         child:
-                            companyLogo.isNotEmpty
+                            (companyLogo ?? '').isNotEmpty
                                 ? Image.network(
                                   companyLogo,
                                   fit: BoxFit.cover,
