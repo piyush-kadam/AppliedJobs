@@ -551,33 +551,124 @@ class _ProfilePageState extends State<ProfilePage> {
                                   )
                                   : buildInitialsAvatar(),
                         ),
+                        // Row(
+                        //   mainAxisSize: MainAxisSize.min,
+                        //   children: [
+                        //     if (profileImageUrl != null)
+                        //       Container(
+                        //         decoration: BoxDecoration(
+                        //           color: Colors.white,
+                        //           shape: BoxShape.circle,
+                        //           boxShadow: [
+                        //             BoxShadow(
+                        //               color: Colors.black.withOpacity(0.2),
+                        //               blurRadius: 4,
+                        //               offset: const Offset(0, 2),
+                        //             ),
+                        //           ],
+                        //         ),
+                        //         child: IconButton(
+                        //           icon: const Icon(
+                        //             Icons.delete,
+                        //             color: Colors.red,
+                        //             size: 24,
+                        //           ),
+                        //           onPressed: removeProfilePicture,
+                        //         ),
+                        //       ),
+                        //     const SizedBox(width: 8),
+                        //     Container(
+                        //       decoration: BoxDecoration(
+                        //         color: Color(0xFF3D47D1),
+                        //         shape: BoxShape.circle,
+                        //         boxShadow: [
+                        //           BoxShadow(
+                        //             color: Colors.black.withOpacity(0.2),
+                        //             blurRadius: 4,
+                        //             offset: const Offset(0, 2),
+                        //           ),
+                        //         ],
+                        //       ),
+                        //       child: IconButton(
+                        //         icon: const Icon(
+                        //           Icons.edit,
+                        //           color: Colors.white,
+                        //           size: 24,
+                        //         ),
+                        //         onPressed: pickAndSaveImage,
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (profileImageUrl != null)
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: IconButton(
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.red,
-                                    size: 24,
+                              // Container(
+                              //   padding: const EdgeInsets.only(bottom: 8.0),
+                              //   width:
+                              //       48, // Ensure both containers are the same size
+                              //   height: 48,
+                              //   decoration: BoxDecoration(
+                              //     color: Colors.white,
+                              //     shape: BoxShape.circle,
+                              //     boxShadow: [
+                              //       BoxShadow(
+                              //         color: Colors.black.withOpacity(0.2),
+                              //         blurRadius: 4,
+                              //         offset: const Offset(0, 2),
+                              //       ),
+                              //     ],
+                              //   ),
+                              //   child: IconButton(
+                              //     icon: const Icon(
+                              //       Icons.delete,
+                              //       color: Colors.red,
+                              //       size: 24,
+                              //     ),
+                              //     onPressed: removeProfilePicture,
+                              //     padding:
+                              //         EdgeInsets.zero, // Remove extra padding
+                              //     alignment:
+                              //         Alignment.center, // Center the icon
+                              //   ),
+                              // ),
+                              Transform.translate(
+                                offset: const Offset(
+                                  0,
+                                  8,
+                                ), // Move down by 8 pixels
+                                child: Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                  onPressed: removeProfilePicture,
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                      size: 24,
+                                    ),
+                                    onPressed: removeProfilePicture,
+                                    padding: EdgeInsets.zero,
+                                    alignment: Alignment.center,
+                                  ),
                                 ),
                               ),
+
                             const SizedBox(width: 8),
                             Container(
+                              width: 48,
+                              height: 48,
                               decoration: BoxDecoration(
                                 color: Color(0xFF3D47D1),
                                 shape: BoxShape.circle,
@@ -596,6 +687,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                   size: 24,
                                 ),
                                 onPressed: pickAndSaveImage,
+                                padding: EdgeInsets.zero,
+                                alignment: Alignment.center,
                               ),
                             ),
                           ],
@@ -785,14 +878,72 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            "💼  AppliedPlus: Your all-in-one job application tracker.🌐 Fetch job posts from LinkedIn, Indeed, and Unstop. ✅ Stay organized, track your applications, and boost your chances of landing your dream job!",
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(
-                              color: Colors.black,
-                              fontSize: 16,
-                            ),
+                          // Text(
+                          //   "💼  AppliedPlus: Your all-in-one job application tracker.🌐 Fetch job posts from LinkedIn, Indeed, and Unstop. ✅ Stay organized, track your applications, and boost your chances of landing your dream job!",
+                          //   textAlign: TextAlign.center,
+                          //   style: GoogleFonts.poppins(
+                          //     color: Colors.black,
+                          //     fontSize: 16,
+                          //   ),
+                          // ),
+                          // Text(
+                          //   "Mission:\nTo make job searching easy by bringing all jobs in one place, helping people find the right job quickly and easily.\n\nVision:\nTo be the most trusted job platform where everyone can find the right job without checking many different websites.",
+                          //   textAlign: TextAlign.center,
+                          //   style: GoogleFonts.poppins(
+                          //     color: Colors.black,
+                          //     fontWeight: FontWeight.bold,
+                          //     fontSize: 16,
+                          //   ),
+                          // ),
+                          Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment
+                                    .start, // Align all children to start (left)
+                            children: [
+                              Text(
+                                "Mission:",
+                                style: GoogleFonts.poppins(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 4,
+                              ), // Small space after label
+                              Text(
+                                "To make job searching easy by bringing all jobs in one place, helping people find the right job quickly and easily.",
+                                textAlign:
+                                    TextAlign
+                                        .start, // Align description text to start
+                                style: GoogleFonts.poppins(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 16,
+                              ), // Space between Mission and Vision
+                              Text(
+                                "Vision:",
+                                style: GoogleFonts.poppins(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "To be the most trusted job platform where everyone can find the right job without checking many different websites.",
+                                textAlign: TextAlign.start,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
                           ),
+
                           const SizedBox(height: 16),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
