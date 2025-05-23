@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // 👈 Add this
 
-
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message)async {
   await Firebase.initializeApp();
@@ -22,9 +21,9 @@ void main() async {
   // ✅ Initialize Supabase
   await Supabase.initialize(
     url:
-        'https://ephgcjpwnccrwcbzsotk.supabase.co', // 🔁 Replace with your Supabase project URL
+        'https://zmhpvznexnagstelsvho.supabase.co', // 🔁 Replace with your Supabase project URL
     anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwaGdjanB3bmNjcndjYnpzb3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ3OTg2NjksImV4cCI6MjA2MDM3NDY2OX0.MWDt2t_sVGQ-Y_hDiV-SiuRVyxR4_SROaJ9Omd_1egY', // 🔁 Replace with your Supabase anon/public key
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptaHB2em5leG5hZ3N0ZWxzdmhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNjQ5MTMsImV4cCI6MjA2MjY0MDkxM30.j6_ORFoX8OBvdlmtZ3LhvepsLfepfC7NB7Unt91R92w', // 🔁 Replace with your Supabase anon/public key
   );
 
   runApp(const MyApp());

@@ -813,7 +813,6 @@ class AppliedJobCard extends StatelessWidget {
     final salaryRange = job['salaryRange'] ?? '';
     final location = job['location'] ?? '';
     final appliedAt = job['appliedAt'];
-    final experienceLevel = job['experienceLevel'] ?? '';
     final companyLogo = job['companyLogo'] ?? '';
     // Get the status from the job data
     final status = job['status'] ?? 'Pending';

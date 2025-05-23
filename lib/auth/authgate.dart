@@ -1,4 +1,3 @@
-import 'package:appliedjobs/auth/lr.dart';
 import 'package:appliedjobs/screens/home.dart';
 import 'package:appliedjobs/user/start.dart';
 import 'package:firebase_auth/firebase_auth.dart';
