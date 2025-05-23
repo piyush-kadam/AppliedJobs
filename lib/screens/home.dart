@@ -219,7 +219,7 @@
 
 import 'package:appliedjobs/auth/authservice.dart';
 import 'package:appliedjobs/models/filter_model.dart';
-import 'package:appliedjobs/notifiaction/notification_services.dart';
+import 'package:appliedjobs/notification/notification_services.dart';
 import 'package:appliedjobs/screens/applied_jobs.dart';
 import 'package:appliedjobs/screens/job_filter_modal.dart';
 import 'package:appliedjobs/screens/jobs.dart';

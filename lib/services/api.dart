@@ -8,7 +8,7 @@ class ApiService {
     'x-rapidapi-host': 'jsearch.p.rapidapi.com',
     'x-rapidapi-key': '1398211647mshbf9c83824427cf4p1ca482jsnf6f38a66f752',
   };
-
+  
   /// Fetch jobs one page at a time for lazy loading
   Future<List<dynamic>> fetchJobsPage({
     String query = 'jobs',
