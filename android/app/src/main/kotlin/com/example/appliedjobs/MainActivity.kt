@@ -1,4 +1,4 @@
-package com.example.appliedjobs
+package com.appliedplus.appliedjobs
 
 import io.flutter.embedding.android.FlutterActivity
 
