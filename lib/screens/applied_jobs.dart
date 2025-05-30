@@ -678,7 +678,13 @@ class AppliedJobsTab extends StatelessWidget {
           );
         }
 
-        final docs = snapshot.data?.docs ?? [];
+        // final docs = snapshot.data?.docs ?? [];
+        final docs =
+            snapshot.data?.docs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return data['deleted'] != true;
+            }).toList() ??
+            [];
 
         if (docs.isEmpty) {
           return Center(
@@ -789,17 +795,12 @@ class AppliedJobCard extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
+      case 'applied':
         return Colors.orange;
-      case 'reviewing':
-        return Colors.blue;
-      case 'interviewed':
-        return Colors.purple;
       case 'shortlisted':
         return Colors.green;
       case 'rejected':
         return Colors.red;
-      case 'hired':
-        return Colors.teal;
       default:
         return Colors.grey;
     }
@@ -815,7 +816,8 @@ class AppliedJobCard extends StatelessWidget {
     final appliedAt = job['appliedAt'];
     final companyLogo = job['companyLogo'] ?? '';
     // Get the status from the job data
-    final status = job['status'] ?? 'Pending';
+    final status =
+        (job['status'] == 'pending' ? 'Applied' : job['status']) ?? 'Applied';
 
     return Card(
       color: Colors.white,
@@ -962,7 +964,10 @@ class AppliedJobCard extends StatelessWidget {
                       ),
                       onPressed: () async {
                         try {
-                          await collectionRef.doc(docId).delete();
+                          // await collectionRef.doc(docId).delete();
+                          await collectionRef.doc(docId).update({
+                            'deleted': true,
+                          });
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(

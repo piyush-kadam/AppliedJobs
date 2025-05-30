@@ -551,55 +551,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                   )
                                   : buildInitialsAvatar(),
                         ),
-                        // Row(
-                        //   mainAxisSize: MainAxisSize.min,
-                        //   children: [
-                        //     if (profileImageUrl != null)
-                        //       Container(
-                        //         decoration: BoxDecoration(
-                        //           color: Colors.white,
-                        //           shape: BoxShape.circle,
-                        //           boxShadow: [
-                        //             BoxShadow(
-                        //               color: Colors.black.withOpacity(0.2),
-                        //               blurRadius: 4,
-                        //               offset: const Offset(0, 2),
-                        //             ),
-                        //           ],
-                        //         ),
-                        //         child: IconButton(
-                        //           icon: const Icon(
-                        //             Icons.delete,
-                        //             color: Colors.red,
-                        //             size: 24,
-                        //           ),
-                        //           onPressed: removeProfilePicture,
-                        //         ),
-                        //       ),
-                        //     const SizedBox(width: 8),
-                        //     Container(
-                        //       decoration: BoxDecoration(
-                        //         color: Color(0xFF3D47D1),
-                        //         shape: BoxShape.circle,
-                        //         boxShadow: [
-                        //           BoxShadow(
-                        //             color: Colors.black.withOpacity(0.2),
-                        //             blurRadius: 4,
-                        //             offset: const Offset(0, 2),
-                        //           ),
-                        //         ],
-                        //       ),
-                        //       child: IconButton(
-                        //         icon: const Icon(
-                        //           Icons.edit,
-                        //           color: Colors.white,
-                        //           size: 24,
-                        //         ),
-                        //         onPressed: pickAndSaveImage,
-                        //       ),
-                        //     ),
-                        //   ],
-                        // ),
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -878,23 +829,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Text(
-                          //   "💼  AppliedPlus: Your all-in-one job application tracker.🌐 Fetch job posts from LinkedIn, Indeed, and Unstop. ✅ Stay organized, track your applications, and boost your chances of landing your dream job!",
-                          //   textAlign: TextAlign.center,
-                          //   style: GoogleFonts.poppins(
-                          //     color: Colors.black,
-                          //     fontSize: 16,
-                          //   ),
-                          // ),
-                          // Text(
-                          //   "Mission:\nTo make job searching easy by bringing all jobs in one place, helping people find the right job quickly and easily.\n\nVision:\nTo be the most trusted job platform where everyone can find the right job without checking many different websites.",
-                          //   textAlign: TextAlign.center,
-                          //   style: GoogleFonts.poppins(
-                          //     color: Colors.black,
-                          //     fontWeight: FontWeight.bold,
-                          //     fontSize: 16,
-                          //   ),
-                          // ),
                           Column(
                             crossAxisAlignment:
                                 CrossAxisAlignment

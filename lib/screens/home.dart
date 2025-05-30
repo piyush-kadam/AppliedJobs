@@ -385,7 +385,7 @@ class _HomePageState extends State<HomePage> {
                     "AppliedPlus",
                     style: GoogleFonts.poppins(
                       color: const Color(0xFF3D47D1),
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -545,7 +545,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
-
-
-  

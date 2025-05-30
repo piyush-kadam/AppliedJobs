@@ -17,16 +17,34 @@ class NotificationServices {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-void saveDeviceToken() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    final token = await NotificationServices().getDeviceToken();
-    await FirebaseFirestore.instance.collection('Users').doc(user.uid).update({
-      'deviceToken': token,
-    });
+  // void saveDeviceToken() async {
+  //   final user = FirebaseAuth.instance.currentUser;
+  //   if (user != null) {
+  //     final token = await NotificationServices().getDeviceToken();
+  //     await FirebaseFirestore.instance.collection('Users').doc(user.uid).update({
+  //       'deviceToken': token,
+  //     });
+  //   }
+  //   print("device token saved successfully!!");
+  // }
+  void saveDeviceToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final token = await NotificationServices().getDeviceToken();
+      final docRef = FirebaseFirestore.instance
+          .collection('Users')
+          .doc(user.uid);
+      final docSnapshot = await docRef.get();
+      if (docSnapshot.exists) {
+        await docRef.update({'deviceToken': token});
+      } else {
+        // Create the user doc with deviceToken field
+        await docRef.set({'deviceToken': token}, SetOptions(merge: true));
+      }
+    }
+    print("device token saved successfully!!");
   }
-  print("device token saved successfully!!");
-}
+
   //function to initialise flutter local notification plugin to show notifications for android when app is active
   void initLocalNotifications(
     BuildContext context,
