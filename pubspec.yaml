@@ -94,18 +94,19 @@ flutter:
     - assets/images/plus.png
     - assets/images/pluss.png
     - assets/images/ap.png
+    - assets/images/app.png
   #   - images/a_dot_ham.jpeg
 
 flutter_native_splash:
   color: "#2e0645"
-  image: assets/images/ap.png
+  image: assets/images/app.png
   android: true
   ios: true
   fullscreen: true
 
   android_12:
     color: "#2e0645"
-    image: assets/images/ap.png
+    image: assets/images/app.png
     android: true
     ios: true
     fullscreen: true

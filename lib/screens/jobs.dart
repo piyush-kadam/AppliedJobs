@@ -1056,47 +1056,50 @@ class _JobsPageState extends State<JobsPage>
             ),
 
             // Platform chips
-            SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children:
-                    _platforms.map((platform) {
-                      final isSelected =
-                          _selectedPlatform == platform ||
-                          (platform == 'All' && _selectedPlatform == null);
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              platform,
-                              style: GoogleFonts.poppins(
-                                color:
-                                    isSelected
-                                        ? Colors.white
-                                        : Color(0xFF3D47D1),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children:
+                      _platforms.map((platform) {
+                        final isSelected =
+                            _selectedPlatform == platform ||
+                            (platform == 'All' && _selectedPlatform == null);
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                platform,
+                                style: GoogleFonts.poppins(
+                                  color:
+                                      isSelected
+                                          ? Colors.white
+                                          : Color(0xFF3D47D1),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
+                            selected: isSelected,
+                            selectedColor: Color(0xFF3D47D1),
+                            backgroundColor: Colors.grey[100],
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedPlatform =
+                                    selected
+                                        ? (platform == 'All' ? null : platform)
+                                        : null;
+                                _applyFilters();
+                              });
+                            },
                           ),
-                          selected: isSelected,
-                          selectedColor: Color(0xFF3D47D1),
-                          backgroundColor: Colors.grey[100],
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectedPlatform =
-                                  selected
-                                      ? (platform == 'All' ? null : platform)
-                                      : null;
-                              _applyFilters();
-                            });
-                          },
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                ),
               ),
             ),
             // The rest scrolls (TabBar hides on scroll)
