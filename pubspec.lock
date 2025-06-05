@@ -241,14 +241,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.2"
-  equatable:
-    dependency: transitive
-    description:
-      name: equatable
-      sha256: "567c64b3cb4cf82397aac55f4f0cbd3ca20d77c6c03bedbc4ceaddc08904aef7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.7"
   fake_async:
     dependency: transitive
     description:
@@ -712,22 +704,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.1"
-  linkedin_login:
-    dependency: "direct main"
-    description:
-      name: linkedin_login
-      sha256: "1af10b3e5f0fba20e16147a8bda6705e483ed659162338e0d89c0465bceb49a5"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.2"
-  linkedin_login_platform_interface:
-    dependency: transitive
-    description:
-      name: linkedin_login_platform_interface
-      sha256: c34678d6bd5656371eed2df6b4f51685d832e8ff48d7c99e991f0a373d473200
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.1"
   lints:
     dependency: transitive
     description:
