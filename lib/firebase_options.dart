@@ -47,29 +47,30 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCpWP8hPik1ROg3rfVRB638pRZL7VyTBQI',
-    appId: '1:534005978803:web:0cfbf1413bff21feaa02c6',
-    messagingSenderId: '534005978803',
-    projectId: 'appliedjobs-92085',
-    authDomain: 'appliedjobs-92085.firebaseapp.com',
-    storageBucket: 'appliedjobs-92085.firebasestorage.app',
-    measurementId: 'G-LCQT7BK2Q0',
+    apiKey: 'AIzaSyD17GuWt65VOeHGKXaGAylfygqKQ5Jho7I',
+    appId: '1:512012526908:web:77a1383f704d0013426a39',
+    messagingSenderId: '512012526908',
+    projectId: 'appliedplus-a9697',
+    authDomain: 'appliedplus-a9697.firebaseapp.com',
+    storageBucket: 'appliedplus-a9697.firebasestorage.app',
+    measurementId: 'G-KFBVVYY91R',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyD27l40KmAvd69hhOlerY93Hg7D720ZLFY',
-    appId: '1:534005978803:android:1f45411ae6313dacaa02c6',
-    messagingSenderId: '534005978803',
-    projectId: 'appliedjobs-92085',
-    storageBucket: 'appliedjobs-92085.firebasestorage.app',
+    apiKey: 'AIzaSyDL8WAeffBvA7SYOeAhwD7RnknuD58IBFc',
+    appId: '1:512012526908:android:c8a61a35e3dfbb9d426a39',
+    messagingSenderId: '512012526908',
+    projectId: 'appliedplus-a9697',
+    storageBucket: 'appliedplus-a9697.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBRiqgvxwkBPb0YvP3sMDVsxK9BjSDsJ78',
-    appId: '1:534005978803:ios:ec95c880221bf1c4aa02c6',
-    messagingSenderId: '534005978803',
-    projectId: 'appliedjobs-92085',
-    storageBucket: 'appliedjobs-92085.firebasestorage.app',
+    apiKey: 'AIzaSyAJeAtIU_ZXwgao0DuoKf3pCdKV7xl2mnI',
+    appId: '1:512012526908:ios:84f85f9409d464e7426a39',
+    messagingSenderId: '512012526908',
+    projectId: 'appliedplus-a9697',
+    storageBucket: 'appliedplus-a9697.firebasestorage.app',
     iosBundleId: 'com.example.appliedjobs',
   );
+
 }
