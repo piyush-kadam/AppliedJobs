@@ -12,7 +12,28 @@
           "package_name": "com.appliedplus.appliedjobs"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "512012526908-24imdfp04p908p8d3p6k36c6ubmk8la0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.appliedplus.appliedjobs",
+            "certificate_hash": "367e477719628bcb16d3f98a48a19e14994feed3"
+          }
+        },
+        {
+          "client_id": "512012526908-jik5b1jrmiqfva1da082t6vcr23qgf03.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.appliedplus.appliedjobs",
+            "certificate_hash": "e06355d2ee1f64c218c3a392aee77655c5a9095f"
+          }
+        },
+        {
+          "client_id": "512012526908-juf1ro66p3vqq7t6csgqq44kluqgve28.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDL8WAeffBvA7SYOeAhwD7RnknuD58IBFc"
@@ -20,7 +41,71 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "512012526908-juf1ro66p3vqq7t6csgqq44kluqgve28.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "512012526908-sjvlj088k5u66t38lh0hci3dm1nc70bs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.appliedjobs"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:512012526908:android:09eb9fed1c7c0056426a39",
+        "android_client_info": {
+          "package_name": "com.appliedplus.recruiters"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "512012526908-k99puudltfn0de07vc8le8h4jtbcheru.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.appliedplus.recruiters",
+            "certificate_hash": "e06355d2ee1f64c218c3a392aee77655c5a9095f"
+          }
+        },
+        {
+          "client_id": "512012526908-u5pgjii2crje0jqbdgpf94q2ggcjd2gf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.appliedplus.recruiters",
+            "certificate_hash": "367e477719628bcb16d3f98a48a19e14994feed3"
+          }
+        },
+        {
+          "client_id": "512012526908-juf1ro66p3vqq7t6csgqq44kluqgve28.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDL8WAeffBvA7SYOeAhwD7RnknuD58IBFc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "512012526908-juf1ro66p3vqq7t6csgqq44kluqgve28.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "512012526908-sjvlj088k5u66t38lh0hci3dm1nc70bs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.appliedjobs"
+              }
+            }
+          ]
         }
       }
     }
