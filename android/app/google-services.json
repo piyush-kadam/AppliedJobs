@@ -1,0 +1,194 @@
+{
+  "project_info": {
+    "project_number": "534005978803",
+    "project_id": "appliedjobs-92085",
+    "storage_bucket": "appliedjobs-92085.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:534005978803:android:7c1add5176bbe631aa02c6",
+        "android_client_info": {
+          "package_name": "com.appliedplus.appliedjobs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "534005978803-88o06d4egcb0o7a8et4bsgk7ruvd70h7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.appliedplus.appliedjobs",
+            "certificate_hash": "367e477719628bcb16d3f98a48a19e14994feed3"
+          }
+        },
+        {
+          "client_id": "534005978803-8m8e6ds945q3tu8jg5fboeqjjo3d3ssb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.appliedplus.appliedjobs",
+            "certificate_hash": "f44975f308dcf91593a59b4561797057e6a6f8b2"
+          }
+        },
+        {
+          "client_id": "534005978803-tfucshf4cpe6jr7bomdq4ppgtrt38hr0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.appliedplus.appliedjobs",
+            "certificate_hash": "e06355d2ee1f64c218c3a392aee77655c5a9095f"
+          }
+        },
+        {
+          "client_id": "534005978803-p5ljarh705h0pmvqr4ab6umdd7jtfgpl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD27l40KmAvd69hhOlerY93Hg7D720ZLFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "534005978803-p5ljarh705h0pmvqr4ab6umdd7jtfgpl.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "534005978803-20rnjidle1dgub63v79ognn3ck61t2nb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.appliedjobs"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:534005978803:android:1f45411ae6313dacaa02c6",
+        "android_client_info": {
+          "package_name": "com.example.appliedjobs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "534005978803-feb82268tuu9k09v4mp07bg5ig2ds0oh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.appliedjobs",
+            "certificate_hash": "ad031555d3581b2501579b51aba0d99f4a6940f4"
+          }
+        },
+        {
+          "client_id": "534005978803-p5ljarh705h0pmvqr4ab6umdd7jtfgpl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD27l40KmAvd69hhOlerY93Hg7D720ZLFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "534005978803-p5ljarh705h0pmvqr4ab6umdd7jtfgpl.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "534005978803-20rnjidle1dgub63v79ognn3ck61t2nb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.appliedjobs"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:534005978803:android:74333d0189486db3aa02c6",
+        "android_client_info": {
+          "package_name": "com.example.appliedjobs_recruiterapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "534005978803-p5ljarh705h0pmvqr4ab6umdd7jtfgpl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD27l40KmAvd69hhOlerY93Hg7D720ZLFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "534005978803-p5ljarh705h0pmvqr4ab6umdd7jtfgpl.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "534005978803-20rnjidle1dgub63v79ognn3ck61t2nb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.appliedjobs"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:534005978803:android:553983f9afd89e02aa02c6",
+        "android_client_info": {
+          "package_name": "com.example.appliedjobs_recruitersapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "534005978803-ujh6kem3sampgj8vbijc4l26h7uuk3ft.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.appliedjobs_recruitersapp",
+            "certificate_hash": "367e477719628bcb16d3f98a48a19e14994feed3"
+          }
+        },
+        {
+          "client_id": "534005978803-p5ljarh705h0pmvqr4ab6umdd7jtfgpl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD27l40KmAvd69hhOlerY93Hg7D720ZLFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "534005978803-p5ljarh705h0pmvqr4ab6umdd7jtfgpl.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "534005978803-20rnjidle1dgub63v79ognn3ck61t2nb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.appliedjobs"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
