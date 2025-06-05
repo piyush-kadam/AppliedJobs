@@ -374,7 +374,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   ClipOval(
                     child: Image.asset(
-                      'assets/images/plus.png',
+                      'assets/images/ap.png',
                       width: 36,
                       height: 36,
                       fit: BoxFit.cover,
