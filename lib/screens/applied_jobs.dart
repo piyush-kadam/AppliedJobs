@@ -246,7 +246,10 @@ class BookmarksTab extends StatelessWidget {
                 isTypeA
                     ? 'Platform: ${(job['job_publisher'] ?? '').toString().toLowerCase()}'
                     : 'Platform: AppliedPlus';
-            final hasLogo = isTypeA && job['employer_logo'] != null;
+            final hasLogo =
+                isTypeA
+                    ? (job['employer_logo'] != null)
+                    : (job['companyLogoUrl'] != null);
 
             return BookmarkJobCard(
               job: job,
@@ -383,19 +386,31 @@ class BookmarkJobCard extends StatelessWidget {
     // Use provided extraction methods
     final jobDescription = job['job_description'] ?? job['description'];
     final jobType =
-        job['employment_type'] ??
-        job['job_employment_type'] ??
-        _extractJobType(jobDescription);
+        isTypeA
+            ? (job['employment_type'] ??
+                job['job_employment_type'] ??
+                _extractJobType(jobDescription))
+            : (job['employmentType'] ?? _extractJobType(jobDescription));
 
     final location = _extractLocation(job);
 
     final salary =
-        job['job_min_salary'] != null && job['job_max_salary'] != null
-            ? '${job['job_min_salary']}-${job['job_max_salary']} ${job['job_salary_currency'] ?? ''}'
-            : _extractSalary(jobDescription);
+        isTypeA
+            ? (job['job_min_salary'] != null && job['job_max_salary'] != null
+                ? '${job['job_min_salary']}-${job['job_max_salary']} ${job['job_salary_currency'] ?? ''}'
+                : _extractSalary(jobDescription))
+            : (job['salaryRange'] != null &&
+                    job['salaryRange'] != 'Not specified'
+                ? job['salaryRange']
+                : _extractSalary(jobDescription));
 
     final experience =
-        job['experienceLevel'] ?? _extractExperience(jobDescription);
+        isTypeA
+            ? (job['experienceLevel'] ?? _extractExperience(jobDescription))
+            : (job['experienceLevel'] != null &&
+                    job['experienceLevel'] != 'Not Specified'
+                ? job['experienceLevel']
+                : _extractExperience(jobDescription));
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -441,204 +456,182 @@ class BookmarkJobCard extends StatelessWidget {
     return title;
   }
 
-  Future<String?> _getCompanyLogoUrl() async {
-    try {
-      final doc =
-          await FirebaseFirestore.instance.collection('Jobs').doc(docId).get();
-      return doc.data()?['companyLogoUrl'];
-    } catch (e) {
-      return null;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final companyLogo = hasLogo ? job['employer_logo'] : null;
+    // Get the appropriate logo URL based on job type
+    final logoUrl = isTypeA ? job['employer_logo'] : job['companyLogoUrl'];
 
-    return FutureBuilder<String?>(
-      future: isTypeA ? Future.value(companyLogo) : _getCompanyLogoUrl(),
-      builder: (context, snapshot) {
-        final logoUrl = snapshot.data;
-        return InkWell(
-          onTap: () {
-            if (isTypeA) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) =>
-                          PlatformApplyPage(job: job, isTypeA: isTypeA),
-                ),
-              );
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Apply(jobId: docId)),
-              );
-            }
-          },
-          child: Card(
-            color: Colors.white,
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+    return InkWell(
+      onTap: () {
+        if (isTypeA) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => PlatformApplyPage(job: job, isTypeA: isTypeA),
             ),
-            elevation: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          );
+        } else {
+          // For local jobs, use the actual job ID from the bookmarked data
+          final jobId = job['id'] ?? docId;
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Apply(jobId: jobId)),
+          );
+        }
+      },
+      child: Card(
+        color: Colors.white,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 4,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoPills(job),
+              const SizedBox(height: 8),
+              Text(
+                _cleanTitle(jobTitle),
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _buildInfoPills(job),
-                  const SizedBox(height: 8),
-                  Text(
-                    _cleanTitle(jobTitle),
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.black,
+                  Container(
+                    height: 32,
+                    width: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Color(0xFF3D47D1), width: 2),
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        height: 32,
-                        width: 32,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Color(0xFF3D47D1),
-                            width: 2,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child:
-                              (logoUrl ?? '').isNotEmpty
-                                  ? Image.network(
-                                    logoUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Image.asset(
-                                        'assets/images/office.jpg',
-                                        fit: BoxFit.cover,
-                                      );
-                                    },
-                                  )
-                                  : Image.asset(
+                    child: ClipOval(
+                      child:
+                          (logoUrl ?? '').isNotEmpty
+                              ? Image.network(
+                                logoUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Image.asset(
                                     'assets/images/office.jpg',
                                     fit: BoxFit.cover,
-                                  ),
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: AutoSizeText(
-                          company,
-                          style: GoogleFonts.poppins(
-                            color: Colors.grey[700],
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                          maxLines: 1,
-                          minFontSize: 10,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                                  );
+                                },
+                              )
+                              : Image.asset(
+                                'assets/images/office.jpg',
+                                fit: BoxFit.cover,
+                              ),
+                    ),
                   ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          publisher,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            color: Colors.black87,
-                          ),
-                        ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: AutoSizeText(
+                      company,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
                       ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.bookmark,
-                          color: Color(0xFF3D47D1),
-                        ),
-                        onPressed: () async {
-                          try {
-                            await collectionRef.doc(docId).delete();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Bookmark removed',
-                                  style: GoogleFonts.poppins(),
-                                ),
-                                backgroundColor: Colors.redAccent,
-                              ),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Failed to remove bookmark: $e',
-                                  style: GoogleFonts.poppins(),
-                                ),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          if (isTypeA) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => PlatformApplyPage(
-                                      job: job,
-                                      isTypeA: isTypeA,
-                                    ),
-                              ),
-                            );
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => Apply(jobId: docId),
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF3D47D1),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                        ),
-                        child: Text(
-                          "Apply",
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                      maxLines: 1,
+                      minFontSize: 10,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 5),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      publisher,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.bookmark, color: Color(0xFF3D47D1)),
+                    onPressed: () async {
+                      try {
+                        await collectionRef.doc(docId).delete();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Bookmark removed',
+                              style: GoogleFonts.poppins(),
+                            ),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Failed to remove bookmark: $e',
+                              style: GoogleFonts.poppins(),
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (isTypeA) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => PlatformApplyPage(
+                                  job: job,
+                                  isTypeA: isTypeA,
+                                ),
+                          ),
+                        );
+                      } else {
+                        // For local jobs, use the actual job ID from the bookmarked data
+                        final jobId = job['id'] ?? docId;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Apply(jobId: jobId),
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF3D47D1),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: Text(
+                      "Apply",
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -731,7 +724,12 @@ class AppliedJobsTab extends StatelessWidget {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(
+            12,
+            12,
+            12,
+            100,
+          ), // Added extra bottom padding
           itemCount: filteredDocs.length,
           itemBuilder: (context, index) {
             final job = filteredDocs[index].data() as Map<String, dynamic>;
@@ -806,6 +804,21 @@ class AppliedJobCard extends StatelessWidget {
     }
   }
 
+  // Helper method to get the company logo URL
+  String _getCompanyLogoUrl() {
+    // Check for both possible logo field names
+    final companyLogo = job['companyLogo'] ?? '';
+    final companyLogoUrl = job['companyLogoUrl'] ?? '';
+
+    // Return whichever one has a value, prioritizing companyLogoUrl
+    if (companyLogoUrl.isNotEmpty) {
+      return companyLogoUrl;
+    } else if (companyLogo.isNotEmpty) {
+      return companyLogo;
+    }
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final title = job['title'] ?? 'No Title';
@@ -814,7 +827,7 @@ class AppliedJobCard extends StatelessWidget {
     final salaryRange = job['salaryRange'] ?? '';
     final location = job['location'] ?? '';
     final appliedAt = job['appliedAt'];
-    final companyLogo = job['companyLogo'] ?? '';
+    final logoUrl = _getCompanyLogoUrl();
     // Get the status from the job data
     final status =
         (job['status'] == 'pending' ? 'Applied' : job['status']) ?? 'Applied';
@@ -903,9 +916,9 @@ class AppliedJobCard extends StatelessWidget {
                       ),
                       child: ClipOval(
                         child:
-                            (companyLogo ?? '').isNotEmpty
+                            logoUrl.isNotEmpty
                                 ? Image.network(
-                                  companyLogo,
+                                  logoUrl,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
                                     return Image.asset(

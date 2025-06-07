@@ -684,30 +684,77 @@ class _JobsPageState extends State<JobsPage>
       );
     }
 
-    return ListView.builder(
-      // controller: _scrollController,
-      physics: const AlwaysScrollableScrollPhysics(),
-      itemCount: _filteredJobs.length + (_isLoadingApi && _hasMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == _filteredJobs.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Center(
-              child: CircularProgressIndicator(color: Color(0xFF3D47D1)),
-            ),
-          );
-        }
+    return NotificationListener<ScrollNotification>(
+      onNotification: (ScrollNotification scrollInfo) {
+        // 🎯 THIS HANDLES YOUR PAGINATION - Same logic as your _onScroll method!
+        if (scrollInfo.metrics.pixels >=
+                scrollInfo.metrics.maxScrollExtent - 200 &&
+            !_isLoadingApi &&
+            _hasMore) {
+          print("🔄 Fetching next page..."); // Debug log
 
-        final job = _filteredJobs[index];
-        final isApiJob = job['type'] == JobType.api;
-
-        if (isApiJob) {
-          return _buildApiJobCard(job);
-        } else {
-          return _buildLocalJobCard(job);
+          _fetchNextPage().then((_) {
+            _combineAndShuffleJobs();
+            if (_isMounted) setState(() {});
+          });
         }
+        return false; // Allow the scroll event to continue
       },
+      child: ListView.builder(
+        // ✅ No ScrollController - this allows NestedScrollView to work properly
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: _filteredJobs.length + (_isLoadingApi && _hasMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == _filteredJobs.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFF3D47D1)),
+              ),
+            );
+          }
+
+          final job = _filteredJobs[index];
+          final isApiJob = job['type'] == JobType.api;
+
+          if (isApiJob) {
+            return _buildApiJobCard(job);
+          } else {
+            return _buildLocalJobCard(job);
+          }
+        },
+      ),
     );
+  }
+
+  List<String> _getUniqueRoles() {
+    final roles = <String>{};
+    for (final job in _combinedJobs) {
+      final title = (job['title'] ?? job['job_title'] ?? '').toString();
+      if (title.isNotEmpty) roles.add(title);
+    }
+    return roles.toList();
+  }
+
+  List<String> _getUniqueLocations() {
+    final locations = <String>{};
+    for (final job in _combinedJobs) {
+      final location =
+          (job['location'] ?? job['job_city'] ?? job['job_country'] ?? '')
+              .toString();
+      if (location.isNotEmpty) locations.add(location);
+    }
+    return locations.toList();
+  }
+
+  List<String> _getUniqueCompanies() {
+    final companies = <String>{};
+    for (final job in _combinedJobs) {
+      final company =
+          (job['companyName'] ?? job['employer_name'] ?? '').toString();
+      if (company.isNotEmpty) companies.add(company);
+    }
+    return companies.toList();
   }
 
   @override
@@ -723,7 +770,7 @@ class _JobsPageState extends State<JobsPage>
           children: [
             // Title
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
               child: RichText(
                 text: TextSpan(
                   style: GoogleFonts.poppins(
@@ -743,128 +790,10 @@ class _JobsPageState extends State<JobsPage>
                 ),
               ),
             ),
-            // Search and filter row
-            // Padding(
-            //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            //   child: Row(
-            //     children: [
-            //       Expanded(
-            //         child: TextField(
-            //           controller: _searchController,
-            //           decoration: InputDecoration(
-            //             hintText: 'Search jobs or companies',
-            //             hintStyle: GoogleFonts.poppins(
-            //               fontSize: 12,
-            //               color: Colors.grey,
-            //             ),
-            //             prefixIcon: const Icon(
-            //               Icons.search,
-            //               color: Color(0xFF3D47D1),
-            //             ),
-            //             filled: true,
-            //             fillColor: Colors.grey[100],
-            //             border: OutlineInputBorder(
-            //               borderRadius: BorderRadius.circular(12),
-            //               borderSide: BorderSide.none,
-            //             ),
-            //             contentPadding: const EdgeInsets.symmetric(
-            //               vertical: 10,
-            //             ),
-            //           ),
-            //           onChanged: (value) {
-            //             setState(() {
-            //               _applyFilters();
-            //             });
-            //           },
-            //         ),
-            //       ),
-            //       const SizedBox(width: 12),
-            //       GestureDetector(
-            //         onTap: () async {
-            //           // 1. Get companies from jobs
-            //           final companiesFromJobs = _getUniqueCompanies().toSet();
 
-            //           // 2. Fetch static companies from gist
-            //           List<String> staticCompanies = [];
-            //           try {
-            //             staticCompanies = await fetchStaticCompanies();
-            //           } catch (e) {
-            //             if (kDebugMode)
-            //               print('Error fetching static companies: $e');
-            //           }
-            //           final allCompanies =
-            //               {...companiesFromJobs, ...staticCompanies}.toList()
-            //                 ..sort();
-
-            //           // 3. Get locations from jobs
-            //           final locationsFromJobs = _getUniqueLocations().toSet();
-
-            //           // 4. Fetch cities from GeoNames
-            //           List<String> geoNamesCities = [];
-            //           try {
-            //             geoNamesCities = await fetchGeoNamesCities(
-            //               country: "IN",
-            //               limit: 100,
-            //             );
-            //           } catch (e) {
-            //             if (kDebugMode)
-            //               print('Error fetching cities from GeoNames: $e');
-            //           }
-            //           final allLocations =
-            //               {...locationsFromJobs, ...geoNamesCities}.toList()
-            //                 ..sort();
-
-            //           // 5. Show the filter modal with merged lists
-            //           showDialog(
-            //             context: context,
-            //             builder:
-            //                 (_) => JobFilterBox(
-            //                   currentFilters: _currentFilters,
-            //                   onApply: (filters) {
-            //                     setState(() {
-            //                       _currentFilters = filters;
-            //                       _applyFilters();
-            //                     });
-            //                   },
-            //                   onClear: () {
-            //                     setState(() {
-            //                       _currentFilters = JobFilters();
-            //                       _applyFilters();
-            //                     });
-            //                   },
-            //                   jobRoles: _getUniqueRoles(),
-            //                   locations:
-            //                       allLocations, // merged: jobs + GeoNames
-            //                   applicationStatuses: const [
-            //                     'All Jobs',
-            //                     'Applied',
-            //                     'Not Applied',
-            //                   ],
-            //                   companies: allCompanies, // merged: jobs + gist
-            //                   jobTypes: staticJobTypes,
-            //                   onClose: () => Navigator.of(context).pop(),
-            //                 ),
-            //           );
-            //         },
-            //         child: Container(
-            //           width: 48,
-            //           height: 48,
-            //           decoration: BoxDecoration(
-            //             color: Color(0xFF3D47D1),
-            //             shape: BoxShape.circle,
-            //           ),
-            //           child: const Icon(
-            //             Icons.filter_alt_outlined,
-            //             color: Colors.white,
-            //             size: 24,
-            //           ),
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
+            // Search bar and filter button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
                   Expanded(
@@ -905,78 +834,6 @@ class _JobsPageState extends State<JobsPage>
                   ),
                   const SizedBox(width: 12),
                   GestureDetector(
-                    // onTap: () async {
-                    //   if (_isLoadingFilterData) {
-                    //     // Optionally show a loading indicator or snackbar
-                    //     ScaffoldMessenger.of(context).showSnackBar(
-                    //       SnackBar(
-                    //         content: Text(
-                    //           "Loading filter options, please wait...",
-                    //         ),
-                    //       ),
-                    //     );
-                    //     return;
-                    //   }
-                    //   // your filter logic remains unchanged
-                    //   final companiesFromJobs = _getUniqueCompanies().toSet();
-
-                    //   List<String> staticCompanies = [];
-                    //   try {
-                    //     staticCompanies = await fetchStaticCompanies();
-                    //   } catch (e) {
-                    //     if (kDebugMode)
-                    //       print('Error fetching static companies: $e');
-                    //   }
-                    //   final allCompanies =
-                    //       {...companiesFromJobs, ...staticCompanies}.toList()
-                    //         ..sort();
-
-                    //   final locationsFromJobs = _getUniqueLocations().toSet();
-
-                    //   List<String> geoNamesCities = [];
-                    //   try {
-                    //     geoNamesCities = await fetchGeoNamesCities(
-                    //       country: "IN",
-                    //       limit: 100,
-                    //     );
-                    //   } catch (e) {
-                    //     if (kDebugMode)
-                    //       print('Error fetching cities from GeoNames: $e');
-                    //   }
-                    //   final allLocations =
-                    //       {...locationsFromJobs, ...geoNamesCities}.toList()
-                    //         ..sort();
-
-                    //   showDialog(
-                    //     context: context,
-                    //     builder:
-                    //         (_) => JobFilterBox(
-                    //           currentFilters: _currentFilters,
-                    //           onApply: (filters) {
-                    //             setState(() {
-                    //               _currentFilters = filters;
-                    //               _applyFilters();
-                    //             });
-                    //           },
-                    //           onClear: () {
-                    //             setState(() {
-                    //               _currentFilters = JobFilters();
-                    //               _applyFilters();
-                    //             });
-                    //           },
-                    //           jobRoles: _getUniqueRoles(),
-                    //           locations: allLocations,
-                    //           applicationStatuses: const [
-                    //             'All Jobs',
-                    //             'Applied',
-                    //             'Not Applied',
-                    //           ],
-                    //           companies: allCompanies,
-                    //           jobTypes: staticJobTypes,
-                    //           onClose: () => Navigator.of(context).pop(),
-                    //         ),
-                    //   );
-                    // },
                     onTap: () {
                       if (_isLoadingFilterData) {
                         // Optionally show a loading indicator or snackbar
@@ -1036,7 +893,6 @@ class _JobsPageState extends State<JobsPage>
                             ),
                       );
                     },
-
                     child: Container(
                       width: 42,
                       height: 42,
@@ -1055,54 +911,7 @@ class _JobsPageState extends State<JobsPage>
               ),
             ),
 
-            // Platform chips
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SizedBox(
-                height: 40,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children:
-                      _platforms.map((platform) {
-                        final isSelected =
-                            _selectedPlatform == platform ||
-                            (platform == 'All' && _selectedPlatform == null);
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                platform,
-                                style: GoogleFonts.poppins(
-                                  color:
-                                      isSelected
-                                          ? Colors.white
-                                          : Color(0xFF3D47D1),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            selected: isSelected,
-                            selectedColor: Color(0xFF3D47D1),
-                            backgroundColor: Colors.grey[100],
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedPlatform =
-                                    selected
-                                        ? (platform == 'All' ? null : platform)
-                                        : null;
-                                _applyFilters();
-                              });
-                            },
-                          ),
-                        );
-                      }).toList(),
-                ),
-              ),
-            ),
-            // The rest scrolls (TabBar hides on scroll)
+            // The rest scrolls (Platform chips, TabBar, and content)
             Expanded(
               child: NestedScrollView(
                 headerSliverBuilder:
@@ -1113,8 +922,69 @@ class _JobsPageState extends State<JobsPage>
                         snap: true,
                         pinned: false,
                         automaticallyImplyLeading: false,
-                        toolbarHeight:
-                            0, // No toolbar height, so no extra space
+                        expandedHeight:
+                            100, // Height for platform chips + tab bar + spacing
+                        toolbarHeight: 0,
+                        flexibleSpace: FlexibleSpaceBar(
+                          background: Column(
+                            children: [
+                              // Platform chips
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  height: 40,
+                                  child: ListView(
+                                    scrollDirection: Axis.horizontal,
+                                    children:
+                                        _platforms.map((platform) {
+                                          final isSelected =
+                                              _selectedPlatform == platform ||
+                                              (platform == 'All' &&
+                                                  _selectedPlatform == null);
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 8,
+                                            ),
+                                            child: ChoiceChip(
+                                              label: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  platform,
+                                                  style: GoogleFonts.poppins(
+                                                    color:
+                                                        isSelected
+                                                            ? Colors.white
+                                                            : Color(0xFF3D47D1),
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                              selected: isSelected,
+                                              selectedColor: Color(0xFF3D47D1),
+                                              backgroundColor: Colors.grey[100],
+                                              onSelected: (selected) {
+                                                setState(() {
+                                                  _selectedPlatform =
+                                                      selected
+                                                          ? (platform == 'All'
+                                                              ? null
+                                                              : platform)
+                                                          : null;
+                                                  _applyFilters();
+                                                });
+                                              },
+                                            ),
+                                          );
+                                        }).toList(),
+                                  ),
+                                ),
+                              ),
+                              // Add spacing between platform chips and tab bar
+                              const SizedBox(height: 12),
+                            ],
+                          ),
+                        ),
                         bottom: PreferredSize(
                           preferredSize: Size.fromHeight(kToolbarHeight),
                           child: Container(
@@ -1204,35 +1074,6 @@ class _JobsPageState extends State<JobsPage>
   }
 
   // Helper methods to extract unique filter values
-  List<String> _getUniqueRoles() {
-    final roles = <String>{};
-    for (final job in _combinedJobs) {
-      final title = (job['title'] ?? job['job_title'] ?? '').toString();
-      if (title.isNotEmpty) roles.add(title);
-    }
-    return roles.toList();
-  }
-
-  List<String> _getUniqueLocations() {
-    final locations = <String>{};
-    for (final job in _combinedJobs) {
-      final location =
-          (job['location'] ?? job['job_city'] ?? job['job_country'] ?? '')
-              .toString();
-      if (location.isNotEmpty) locations.add(location);
-    }
-    return locations.toList();
-  }
-
-  List<String> _getUniqueCompanies() {
-    final companies = <String>{};
-    for (final job in _combinedJobs) {
-      final company =
-          (job['companyName'] ?? job['employer_name'] ?? '').toString();
-      if (company.isNotEmpty) companies.add(company);
-    }
-    return companies.toList();
-  }
 
   Future<List<Map<String, dynamic>>> _getMatchedJobs() async {
     // If we've already fetched the maximum number of times, return the cached results
@@ -1384,8 +1225,12 @@ class _JobsPageState extends State<JobsPage>
           'job_apply_link': job['job_apply_link'],
           'employer_logo': job['employer_logo'],
           'job_publisher': job['job_publisher'],
+          'job_city': job['job_city'], // ✅ add if exists
+          'job_country': job['job_country'], // ✅ add if exists
+          'location': job['location'], // ✅ fallback, if provided
           'timestamp': FieldValue.serverTimestamp(),
         });
+
         setState(() => bookmarkedJobIds.add(docId));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1446,16 +1291,25 @@ class _JobsPageState extends State<JobsPage>
         ).showSnackBar(const SnackBar(content: Text("Removed from bookmarks")));
       } else {
         await docRef.set({
-          'jobId': jobId,
+          'id': job['id'], // Unique Job ID
           'title': job['title'],
           'companyName': job['companyName'],
-          'salaryRange': job['salaryRange'] ?? 'Salary not specified',
+          'companyLogoUrl': job['companyLogoUrl'],
+          'description': job['description'],
           'location': job['location'],
+          'salaryRange': job['salaryRange'] ?? 'Not specified',
           'employmentType': job['employmentType'],
-          'experienceLevel': job['experienceLevel'] ?? 'Not specified',
-          'time': job['datePosted'] ?? FieldValue.serverTimestamp(),
-          'timestamp': FieldValue.serverTimestamp(),
+          'experienceLevel': job['experienceLevel'] ?? 'Not Specified',
+          'genderPreference': job['genderPreference'] ?? 'Any',
+          'industry': job['industry'] ?? 'Not Specified',
+          'skills': job['skills'] ?? [],
+          'postedBy': job['postedBy'],
+          'isClosed': job['isClosed'] ?? false,
+          'isDraft': job['isDraft'] ?? false,
+          'datePosted': job['datePosted'] ?? FieldValue.serverTimestamp(),
+          'timestamp': FieldValue.serverTimestamp(), // Time of bookmarking
         });
+
         setState(() => bookmarkedJobIds.add(jobId));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Job bookmarked successfully")),
@@ -1695,12 +1549,12 @@ class _JobsPageState extends State<JobsPage>
                                 fit: BoxFit.cover,
                                 errorBuilder:
                                     (ctx, obj, stack) => Image.asset(
-                                      'assets/images/office.jpg',
+                                      'assets/images/ap.png',
                                       fit: BoxFit.cover,
                                     ),
                               )
                               : Image.asset(
-                                'assets/images/office.jpg',
+                                'assets/images/ap.png',
                                 fit: BoxFit.cover,
                               ),
                     ),

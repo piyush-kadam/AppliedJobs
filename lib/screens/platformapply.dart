@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:swipeable_button_view/swipeable_button_view.dart';
 
 class PlatformApplyPage extends StatefulWidget {
   final Map<String, dynamic> job;
@@ -22,6 +23,7 @@ class PlatformApplyPage extends StatefulWidget {
 class _PlatformApplyPageState extends State<PlatformApplyPage>
     with WidgetsBindingObserver {
   bool _isApplicationInProgress = false;
+  bool _isFinished = false;
 
   @override
   void initState() {
@@ -147,6 +149,10 @@ class _PlatformApplyPageState extends State<PlatformApplyPage>
               onPressed: () {
                 print('User indicated they did NOT apply');
                 Navigator.of(context).pop();
+                // Reset the swipe button
+                setState(() {
+                  _isFinished = false;
+                });
               },
             ),
             TextButton(
@@ -199,6 +205,48 @@ class _PlatformApplyPageState extends State<PlatformApplyPage>
     );
   }
 
+  // Handle swipe action for external applications
+  Future<void> _handleExternalApply() async {
+    final applyLink = widget.isTypeA ? widget.job['job_apply_link'] : null;
+
+    if (applyLink != null) {
+      // Set flag to indicate application in progress
+      _isApplicationInProgress = true;
+
+      final Uri uri = Uri.parse(applyLink);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        _isApplicationInProgress = false; // Reset flag if URL launch fails
+        setState(() {
+          _isFinished = false; // Reset swipe button
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Could not launch application URL',
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // Handle swipe action for platform applications
+  Future<void> _handlePlatformApply() async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => Apply(jobId: widget.job['id'])),
+    );
+
+    // Reset the swipe button after navigation
+    setState(() {
+      _isFinished = false;
+    });
+  }
+
   // Add job to user's applied jobs collection
   Future<void> _addToAppliedJobs() async {
     try {
@@ -242,10 +290,12 @@ class _PlatformApplyPageState extends State<PlatformApplyPage>
         'appliedAt': FieldValue.serverTimestamp(),
         'status': 'Applied',
         'applicationMethod': 'External',
-        'jobType': jobType,
+        // Fixed field names to match AppliedJobCard expectations
+        'employmentType': jobType, // Changed from 'jobType' to 'employmentType'
         'location': location,
-        'salary': salary,
-        'experience': experience,
+        'salaryRange': salary, // Changed from 'salary' to 'salaryRange'
+        'experienceLevel':
+            experience, // Changed from 'experience' to 'experienceLevel'
         'companyLogo': companyLogo,
         'jobData': _sanitizeJobData(job),
       };
@@ -468,7 +518,7 @@ class _PlatformApplyPageState extends State<PlatformApplyPage>
                       : ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Image.asset(
-                          'assets/images/office.jpg',
+                          'assets/images/ap.png',
                           width: 80,
                           height: 80,
                           fit: BoxFit.contain,
@@ -526,74 +576,40 @@ class _PlatformApplyPageState extends State<PlatformApplyPage>
             ),
           ],
         ),
-        child:
-            widget.isTypeA && applyLink != null
-                ? ElevatedButton(
-                  onPressed: () async {
-                    // Set flag to indicate application in progress
-                    _isApplicationInProgress = true;
-
-                    final Uri uri = Uri.parse(applyLink);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(
-                        uri,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    } else {
-                      _isApplicationInProgress =
-                          false; // Reset flag if URL launch fails
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Could not launch application URL',
-                            style: GoogleFonts.poppins(),
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF3D47D1),
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    'Apply for this position',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                )
-                : ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Apply(jobId: widget.job['id']),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF3D47D1),
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    'Apply through platform',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+        child: SwipeableButtonView(
+          buttonText:
+              widget.isTypeA && applyLink != null
+                  ? '      Apply for this position'
+                  : 'Swipe to apply through platform',
+          buttonWidget: Container(
+            child: Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey),
+          ),
+          activeColor: Color(0xFF3D47D1),
+          isFinished: _isFinished,
+          onWaitingProcess: () {
+            // Immediately finish without delay to remove animation
+            setState(() {
+              _isFinished = true;
+            });
+          },
+          onFinish: () async {
+            if (widget.isTypeA && applyLink != null) {
+              await _handleExternalApply();
+            } else {
+              await _handlePlatformApply();
+            }
+            // Reset the button state after action
+            setState(() {
+              _isFinished = false;
+            });
+          },
+          buttonColor: Colors.white,
+          buttontextstyle: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }

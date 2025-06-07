@@ -523,13 +523,13 @@ class _ProfilePageState extends State<ProfilePage> {
               : SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
-                  vertical: 50,
+                  vertical: 20, // Reduced from 50 to 20
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Stack(
-                      alignment: Alignment.bottomRight,
+                    // Profile Photo Section
+                    Column(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(4),
@@ -551,72 +551,43 @@ class _ProfilePageState extends State<ProfilePage> {
                                   )
                                   : buildInitialsAvatar(),
                         ),
+                        const SizedBox(
+                          height: 16,
+                        ), // Space between photo and buttons
+                        // Action Buttons Row - Now below the profile photo
                         Row(
-                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             if (profileImageUrl != null)
-                              // Container(
-                              //   padding: const EdgeInsets.only(bottom: 8.0),
-                              //   width:
-                              //       48, // Ensure both containers are the same size
-                              //   height: 48,
-                              //   decoration: BoxDecoration(
-                              //     color: Colors.white,
-                              //     shape: BoxShape.circle,
-                              //     boxShadow: [
-                              //       BoxShadow(
-                              //         color: Colors.black.withOpacity(0.2),
-                              //         blurRadius: 4,
-                              //         offset: const Offset(0, 2),
-                              //       ),
-                              //     ],
-                              //   ),
-                              //   child: IconButton(
-                              //     icon: const Icon(
-                              //       Icons.delete,
-                              //       color: Colors.red,
-                              //       size: 24,
-                              //     ),
-                              //     onPressed: removeProfilePicture,
-                              //     padding:
-                              //         EdgeInsets.zero, // Remove extra padding
-                              //     alignment:
-                              //         Alignment.center, // Center the icon
-                              //   ),
-                              // ),
-                              Transform.translate(
-                                offset: const Offset(
-                                  0,
-                                  8,
-                                ), // Move down by 8 pixels
-                                child: Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                      size: 24,
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
                                     ),
-                                    onPressed: removeProfilePicture,
-                                    padding: EdgeInsets.zero,
-                                    alignment: Alignment.center,
+                                  ],
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                    size: 24,
                                   ),
+                                  onPressed: removeProfilePicture,
+                                  padding: EdgeInsets.zero,
+                                  alignment: Alignment.center,
                                 ),
                               ),
 
-                            const SizedBox(width: 8),
+                            if (profileImageUrl != null)
+                              const SizedBox(width: 16),
+
                             Container(
                               width: 48,
                               height: 48,
@@ -646,6 +617,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 30),
 
                     // User Info
@@ -830,9 +802,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment
-                                    .start, // Align all children to start (left)
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 "Mission:",
@@ -842,22 +812,16 @@ class _ProfilePageState extends State<ProfilePage> {
                                   fontSize: 16,
                                 ),
                               ),
-                              const SizedBox(
-                                height: 4,
-                              ), // Small space after label
+                              const SizedBox(height: 4),
                               Text(
                                 "To make job searching easy by bringing all jobs in one place, helping people find the right job quickly and easily.",
-                                textAlign:
-                                    TextAlign
-                                        .start, // Align description text to start
+                                textAlign: TextAlign.start,
                                 style: GoogleFonts.poppins(
                                   color: Colors.black,
                                   fontSize: 16,
                                 ),
                               ),
-                              const SizedBox(
-                                height: 16,
-                              ), // Space between Mission and Vision
+                              const SizedBox(height: 16),
                               Text(
                                 "Vision:",
                                 style: GoogleFonts.poppins(
@@ -914,9 +878,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
 
-                    const SizedBox(height: 10),
-
-                    const SizedBox(height: 40),
+                    // Increased bottom spacing for better scrolling experience
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),

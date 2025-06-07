@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:appliedjobs/screens/resume.dart';
+import 'package:swipeable_button_view/swipeable_button_view.dart';
 
 class Apply extends StatefulWidget {
   final String jobId;
@@ -17,6 +18,7 @@ class _ApplyState extends State<Apply> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = true;
   bool _isSubmitting = false;
+  bool isFinished = false;
   Map<String, dynamic>? _jobData;
   Map<String, dynamic>? _userData;
   String? _errorMessage;
@@ -142,6 +144,7 @@ class _ApplyState extends State<Apply> {
       await userAppliedJobRef.set({
         'jobId': widget.jobId,
         'companyName': _jobData!['companyName'],
+        'companyLogoUrl': _jobData!['companyLogoUrl'],
         'title': _jobData!['title'],
         'location': _jobData!['location'],
         'employmentType': _jobData!['employmentType'],
@@ -151,7 +154,6 @@ class _ApplyState extends State<Apply> {
         'applicationId': jobAppRef.id,
         'status': 'pending',
       });
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -296,34 +298,38 @@ class _ApplyState extends State<Apply> {
                 // Submit button
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submitApplication,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF3D47D1),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
+                  child: SwipeableButtonView(
+                    buttonText: "Submit Application",
+                    buttontextstyle: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
                     ),
-                    child:
-                        _isSubmitting
-                            ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                            : Text(
-                              'Submit Application',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                    buttonWidget: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: Color(0xFF3D47D1),
+                    ),
+                    activeColor: Color(0xFF3D47D1),
+                    isFinished: isFinished,
+                    onWaitingProcess: () async {
+                      setState(() {
+                        _isSubmitting = true;
+                      });
+
+                      await _submitApplication(); // your submit function
+
+                      setState(() {
+                        isFinished = true;
+                        _isSubmitting = false;
+                      });
+                    },
+                    onFinish: () async {
+                      // Optionally show a confirmation or pop a screen
+                      await Future.delayed(Duration(seconds: 1));
+                      setState(() {
+                        isFinished = false; // Reset to allow resubmission
+                      });
+                    },
                   ),
                 ),
               ],
