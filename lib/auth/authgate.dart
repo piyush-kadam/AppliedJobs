@@ -1,5 +1,5 @@
 import 'package:appliedjobs/screens/home.dart';
-import 'package:appliedjobs/user/start.dart';
+import 'package:appliedjobs/user/screens.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -18,7 +18,7 @@ class AuthGate extends StatelessWidget {
           }
           // user is not logged in
           else {
-            return const StartPage();
+            return const ScreensPage();
           }
         },
       ),

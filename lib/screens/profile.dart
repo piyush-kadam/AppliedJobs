@@ -1,6 +1,7 @@
 import 'package:appliedjobs/auth/authservice.dart';
 import 'package:appliedjobs/screens/details.dart';
 import 'package:appliedjobs/screens/resume.dart';
+import 'package:appliedjobs/user/screens.dart';
 import 'package:appliedjobs/user/start.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -860,7 +861,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const StartPage(),
+                                    builder: (context) => const ScreensPage(),
                                   ),
                                 );
                               }

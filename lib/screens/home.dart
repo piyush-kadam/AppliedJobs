@@ -372,21 +372,12 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 children: [
-                  ClipOval(
-                    child: Image.asset(
-                      'assets/images/ap.png',
-                      width: 36,
-                      height: 36,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
                   Text(
                     "AppliedPlus",
                     style: GoogleFonts.poppins(
                       color: const Color(0xFF3D47D1),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ],
@@ -494,7 +485,7 @@ class _HomePageState extends State<HomePage> {
                         onClose: hideFilterBox,
                         jobRoles: ['All Roles', ..._uniqueRoles],
                         locations: ['All Cities', ..._uniqueLocations],
-                        applicationStatuses: _applicationStatuses,
+
                         companies: _uniqueCompanies,
                         jobTypes: _jobTypes,
                       ),

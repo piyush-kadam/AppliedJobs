@@ -96,6 +96,8 @@ flutter:
     - assets/images/pluss.png
     - assets/images/ap.png
     - assets/images/app.png
+    - assets/images/pos.jpg
+    - assets/images/pus.jpg
   #   - images/a_dot_ham.jpeg
 
 flutter_native_splash:

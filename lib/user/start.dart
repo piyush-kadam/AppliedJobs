@@ -14,7 +14,7 @@ class StartPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 25.0),
           child: Column(
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 80),
 
               // Top Text Section
               Column(
@@ -32,7 +32,7 @@ class StartPage extends StatelessWidget {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        "Applied Plus",
+                        "AppliedPlus",
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -64,7 +64,7 @@ class StartPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 40),
                   Text(
                     "Connect your favorite job boards and track\nall your applications in one place.",
                     textAlign: TextAlign.center,
@@ -77,7 +77,7 @@ class StartPage extends StatelessWidget {
               ),
 
               // Spacer for pushing button to bottom
-              SizedBox(height: 270),
+              SizedBox(height: 240),
 
               // Get Started Button with reduced width
               SizedBox(

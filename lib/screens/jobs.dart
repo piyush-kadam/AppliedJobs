@@ -882,11 +882,7 @@ class _JobsPageState extends State<JobsPage>
                               },
                               jobRoles: _getUniqueRoles(),
                               locations: allLocations,
-                              applicationStatuses: const [
-                                'All Jobs',
-                                'Applied',
-                                'Not Applied',
-                              ],
+
                               companies: allCompanies,
                               jobTypes: staticJobTypes,
                               onClose: () => Navigator.of(context).pop(),
