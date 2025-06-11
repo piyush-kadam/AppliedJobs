@@ -373,7 +373,7 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 children: [
                   Text(
-                    "AppliedPlus",
+                    "AppliedPlus+",
                     style: GoogleFonts.poppins(
                       color: const Color(0xFF3D47D1),
                       fontSize: 20,
