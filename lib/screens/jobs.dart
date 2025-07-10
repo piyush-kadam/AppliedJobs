@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:appliedjobs/models/filter_model.dart';
 import 'package:appliedjobs/screens/apply.dart';
 import 'package:appliedjobs/screens/job_filter_modal.dart';
@@ -166,9 +165,6 @@ class _JobsPageState extends State<JobsPage>
     'LinkedIn',
     'Cognizant',
     'Glassdoor',
-    'P & G',
-    'Trakstar',
-    'Abbott Jobs',
     'OLX',
   ];
 
@@ -200,6 +196,320 @@ class _JobsPageState extends State<JobsPage>
     _scrollController.addListener(_onScroll);
     // Don't fetch matched jobs immediately, we'll do it after jobs are loaded
   }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFE0E0E0),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+              child: RichText(
+                text: TextSpan(
+                  style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  children: const [
+                    TextSpan(
+                      text: 'Find Your Dream ',
+                      style: TextStyle(color: Colors.black),
+                    ),
+                    TextSpan(
+                      text: 'Job!!',
+                      style: TextStyle(color: Color(0xFF3D47D1)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Search bar and filter button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 40, // Reduced height
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search jobs or companies',
+                          hintStyle: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Color(0xFF3D47D1),
+                            size: 20, // Slightly smaller icon
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 8, // Reduced padding
+                            horizontal: 12,
+                          ),
+                        ),
+                        style: GoogleFonts.poppins(fontSize: 13),
+                        onChanged: (value) {
+                          setState(() {
+                            _applyFilters();
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () {
+                      if (_isLoadingFilterData) {
+                        // Optionally show a loading indicator or snackbar
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              "Loading filter options, please wait...",
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      final companiesFromJobs = _getUniqueCompanies().toSet();
+                      final allCompanies =
+                          {
+                              ...companiesFromJobs,
+                              ..._cachedStaticCompanies,
+                            }.toList()
+                            ..sort();
+
+                      final locationsFromJobs = _getUniqueLocations().toSet();
+                      final allLocations =
+                          {
+                              ...locationsFromJobs,
+                              ..._cachedGeoNamesCities,
+                            }.toList()
+                            ..sort();
+
+                      showDialog(
+                        context: context,
+                        builder:
+                            (_) => JobFilterBox(
+                              currentFilters: _currentFilters,
+                              onApply: (filters) {
+                                setState(() {
+                                  _currentFilters = filters;
+                                  _applyFilters();
+                                });
+                              },
+                              onClear: () {
+                                setState(() {
+                                  _currentFilters = JobFilters();
+                                  _applyFilters();
+                                });
+                              },
+                              jobRoles: _getUniqueRoles(),
+                              locations: allLocations,
+
+                              companies: allCompanies,
+                              jobTypes: staticJobTypes,
+                              onClose: () => Navigator.of(context).pop(),
+                            ),
+                      );
+                    },
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF3D47D1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.filter_alt_outlined,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // The rest scrolls (Platform chips, TabBar, and content)
+            Expanded(
+              child: NestedScrollView(
+                headerSliverBuilder:
+                    (context, innerBoxIsScrolled) => [
+                      SliverAppBar(
+                        backgroundColor: const Color(0xFFE0E0E0),
+                        floating: true,
+                        snap: true,
+                        pinned: false,
+                        automaticallyImplyLeading: false,
+                        expandedHeight:
+                            100, // Height for platform chips + tab bar + spacing
+                        toolbarHeight: 0,
+                        flexibleSpace: FlexibleSpaceBar(
+                          background: Column(
+                            children: [
+                              // Platform chips
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  height: 40,
+                                  child: ListView(
+                                    scrollDirection: Axis.horizontal,
+                                    children:
+                                        _platforms.map((platform) {
+                                          final isSelected =
+                                              _selectedPlatform == platform ||
+                                              (platform == 'All' &&
+                                                  _selectedPlatform == null);
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 8,
+                                            ),
+                                            child: ChoiceChip(
+                                              label: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  platform,
+                                                  style: GoogleFonts.poppins(
+                                                    color:
+                                                        isSelected
+                                                            ? Colors.white
+                                                            : Color(0xFF3D47D1),
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                              selected: isSelected,
+                                              selectedColor: Color(0xFF3D47D1),
+                                              backgroundColor: Colors.grey[100],
+                                              onSelected: (selected) {
+                                                setState(() {
+                                                  _selectedPlatform =
+                                                      selected
+                                                          ? (platform == 'All'
+                                                              ? null
+                                                              : platform)
+                                                          : null;
+                                                  _applyFilters();
+                                                });
+                                              },
+                                            ),
+                                          );
+                                        }).toList(),
+                                  ),
+                                ),
+                              ),
+                              // Add spacing between platform chips and tab bar
+                              const SizedBox(height: 12),
+                            ],
+                          ),
+                        ),
+                        bottom: PreferredSize(
+                          preferredSize: Size.fromHeight(kToolbarHeight),
+                          child: Container(
+                            color: const Color(0xFFE0E0E0),
+                            child: TabBar(
+                              padding: EdgeInsets.only(top: 0),
+                              labelColor: const Color(0xFF3D47D1),
+                              unselectedLabelColor: Colors.black54,
+                              labelStyle: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              unselectedLabelStyle: GoogleFonts.poppins(),
+                              indicatorColor: const Color(0xFF3D47D1),
+                              tabs: const [
+                                Tab(text: "Recent Jobs"),
+                                Tab(text: "Best For You"),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                body: TabBarView(
+                  children: [
+                    RefreshIndicator(
+                      onRefresh: () async {
+                        _clearCache();
+                      },
+                      child: _buildCombinedJobsList(),
+                    ),
+                    FutureBuilder<List<Map<String, dynamic>>>(
+                      future: _matchedJobsFuture ?? Future.value([]),
+                      builder: (context, snapshot) {
+                        if (_filteredJobs.isEmpty || _isLoadingCombined) {
+                          return _buildLoadingIndicator();
+                        }
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        } else if (snapshot.hasError ||
+                            !snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          return ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              const SizedBox(height: 200),
+                              Center(
+                                child: Text(
+                                  'No matching jobs found',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey[600],
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          final matchedJobs = snapshot.data!;
+                          return RefreshIndicator(
+                            onRefresh: _refreshMatchedJobs,
+                            child: ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: matchedJobs.length,
+                              itemBuilder: (context, index) {
+                                final job = matchedJobs[index];
+                                final isApiJob = job['type'] == JobType.api;
+                                return isApiJob
+                                    ? _buildApiJobCard(job)
+                                    : _buildLocalJobCard(job);
+                              },
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper methods to extract unique filter values
 
   Future<void> _fetchFilterData() async {
     try {
@@ -757,320 +1067,6 @@ class _JobsPageState extends State<JobsPage>
     return companies.toList();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFE0E0E0),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
-              child: RichText(
-                text: TextSpan(
-                  style: GoogleFonts.poppins(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  children: const [
-                    TextSpan(
-                      text: 'Find Your Dream ',
-                      style: TextStyle(color: Colors.black),
-                    ),
-                    TextSpan(
-                      text: 'Job!!',
-                      style: TextStyle(color: Color(0xFF3D47D1)),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Search bar and filter button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 40, // Reduced height
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search jobs or companies',
-                          hintStyle: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Color(0xFF3D47D1),
-                            size: 20, // Slightly smaller icon
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey[100],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8, // Reduced padding
-                            horizontal: 12,
-                          ),
-                        ),
-                        style: GoogleFonts.poppins(fontSize: 13),
-                        onChanged: (value) {
-                          setState(() {
-                            _applyFilters();
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () {
-                      if (_isLoadingFilterData) {
-                        // Optionally show a loading indicator or snackbar
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "Loading filter options, please wait...",
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-
-                      final companiesFromJobs = _getUniqueCompanies().toSet();
-                      final allCompanies =
-                          {
-                              ...companiesFromJobs,
-                              ..._cachedStaticCompanies,
-                            }.toList()
-                            ..sort();
-
-                      final locationsFromJobs = _getUniqueLocations().toSet();
-                      final allLocations =
-                          {
-                              ...locationsFromJobs,
-                              ..._cachedGeoNamesCities,
-                            }.toList()
-                            ..sort();
-
-                      showDialog(
-                        context: context,
-                        builder:
-                            (_) => JobFilterBox(
-                              currentFilters: _currentFilters,
-                              onApply: (filters) {
-                                setState(() {
-                                  _currentFilters = filters;
-                                  _applyFilters();
-                                });
-                              },
-                              onClear: () {
-                                setState(() {
-                                  _currentFilters = JobFilters();
-                                  _applyFilters();
-                                });
-                              },
-                              jobRoles: _getUniqueRoles(),
-                              locations: allLocations,
-
-                              companies: allCompanies,
-                              jobTypes: staticJobTypes,
-                              onClose: () => Navigator.of(context).pop(),
-                            ),
-                      );
-                    },
-                    child: Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: Color(0xFF3D47D1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.filter_alt_outlined,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // The rest scrolls (Platform chips, TabBar, and content)
-            Expanded(
-              child: NestedScrollView(
-                headerSliverBuilder:
-                    (context, innerBoxIsScrolled) => [
-                      SliverAppBar(
-                        backgroundColor: const Color(0xFFE0E0E0),
-                        floating: true,
-                        snap: true,
-                        pinned: false,
-                        automaticallyImplyLeading: false,
-                        expandedHeight:
-                            100, // Height for platform chips + tab bar + spacing
-                        toolbarHeight: 0,
-                        flexibleSpace: FlexibleSpaceBar(
-                          background: Column(
-                            children: [
-                              // Platform chips
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: SizedBox(
-                                  height: 40,
-                                  child: ListView(
-                                    scrollDirection: Axis.horizontal,
-                                    children:
-                                        _platforms.map((platform) {
-                                          final isSelected =
-                                              _selectedPlatform == platform ||
-                                              (platform == 'All' &&
-                                                  _selectedPlatform == null);
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                              right: 8,
-                                            ),
-                                            child: ChoiceChip(
-                                              label: FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: Text(
-                                                  platform,
-                                                  style: GoogleFonts.poppins(
-                                                    color:
-                                                        isSelected
-                                                            ? Colors.white
-                                                            : Color(0xFF3D47D1),
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ),
-                                              selected: isSelected,
-                                              selectedColor: Color(0xFF3D47D1),
-                                              backgroundColor: Colors.grey[100],
-                                              onSelected: (selected) {
-                                                setState(() {
-                                                  _selectedPlatform =
-                                                      selected
-                                                          ? (platform == 'All'
-                                                              ? null
-                                                              : platform)
-                                                          : null;
-                                                  _applyFilters();
-                                                });
-                                              },
-                                            ),
-                                          );
-                                        }).toList(),
-                                  ),
-                                ),
-                              ),
-                              // Add spacing between platform chips and tab bar
-                              const SizedBox(height: 12),
-                            ],
-                          ),
-                        ),
-                        bottom: PreferredSize(
-                          preferredSize: Size.fromHeight(kToolbarHeight),
-                          child: Container(
-                            color: const Color(0xFFE0E0E0),
-                            child: TabBar(
-                              padding: EdgeInsets.only(top: 0),
-                              labelColor: const Color(0xFF3D47D1),
-                              unselectedLabelColor: Colors.black54,
-                              labelStyle: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                              ),
-                              unselectedLabelStyle: GoogleFonts.poppins(),
-                              indicatorColor: const Color(0xFF3D47D1),
-                              tabs: const [
-                                Tab(text: "Recent Jobs"),
-                                Tab(text: "Best For You"),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                body: TabBarView(
-                  children: [
-                    RefreshIndicator(
-                      onRefresh: () async {
-                        _clearCache();
-                      },
-                      child: _buildCombinedJobsList(),
-                    ),
-                    FutureBuilder<List<Map<String, dynamic>>>(
-                      future: _matchedJobsFuture ?? Future.value([]),
-                      builder: (context, snapshot) {
-                        if (_filteredJobs.isEmpty || _isLoadingCombined) {
-                          return _buildLoadingIndicator();
-                        }
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        } else if (snapshot.hasError ||
-                            !snapshot.hasData ||
-                            snapshot.data!.isEmpty) {
-                          return ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            children: [
-                              const SizedBox(height: 200),
-                              Center(
-                                child: Text(
-                                  'No matching jobs found',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.grey[600],
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        } else {
-                          final matchedJobs = snapshot.data!;
-                          return RefreshIndicator(
-                            onRefresh: _refreshMatchedJobs,
-                            child: ListView.builder(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              itemCount: matchedJobs.length,
-                              itemBuilder: (context, index) {
-                                final job = matchedJobs[index];
-                                final isApiJob = job['type'] == JobType.api;
-                                return isApiJob
-                                    ? _buildApiJobCard(job)
-                                    : _buildLocalJobCard(job);
-                              },
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Helper methods to extract unique filter values
-
   Future<List<Map<String, dynamic>>> _getMatchedJobs() async {
     // If we've already fetched the maximum number of times, return the cached results
     if (_bestForYouFetchCount >= _maxBestForYouFetches &&
@@ -1545,12 +1541,12 @@ class _JobsPageState extends State<JobsPage>
                                 fit: BoxFit.cover,
                                 errorBuilder:
                                     (ctx, obj, stack) => Image.asset(
-                                      'assets/images/ap.png',
+                                      'assets/images/lo.jpg',
                                       fit: BoxFit.cover,
                                     ),
                               )
                               : Image.asset(
-                                'assets/images/ap.png',
+                                'assets/images/lo.jpg',
                                 fit: BoxFit.cover,
                               ),
                     ),

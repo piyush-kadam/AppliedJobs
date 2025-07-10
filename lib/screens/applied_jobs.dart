@@ -922,13 +922,13 @@ class AppliedJobCard extends StatelessWidget {
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
                                     return Image.asset(
-                                      'assets/images/office.jpg',
+                                      'assets/images/lo.jpg',
                                       fit: BoxFit.cover,
                                     );
                                   },
                                 )
                                 : Image.asset(
-                                  'assets/images/office.jpg',
+                                  'assets/images/lo.jpg',
                                   fit: BoxFit.cover,
                                 ),
                       ),

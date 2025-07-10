@@ -24,7 +24,7 @@ class StartPage extends StatelessWidget {
                     children: [
                       ClipOval(
                         child: Image.asset(
-                          'assets/images/ap.png',
+                          'assets/images/appliedpluslogo.png',
                           width: 46,
                           height: 46,
                           fit: BoxFit.cover,

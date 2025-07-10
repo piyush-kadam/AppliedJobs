@@ -86,33 +86,31 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/linkedin.jpg
-    - assets/images/office.jpg
-    - assets/images/start.png
     - assets/images/google.jpg
-    - assets/images/splash.png
-    - assets/images/logo.png
-    - assets/images/plus.png
-    - assets/images/pluss.png
-    - assets/images/ap.png
-    - assets/images/app.png
     - assets/images/pos.jpg
     - assets/images/pus.jpg
+    - assets/images/appliedpluslogo.png
+    - assets/images/apl.png
+    - assets/images/lo.jpg
+    - assets/images/s1.jpg
+    - assets/images/logo.jpg
+    - assets/images/logoplus.png
   #   - images/a_dot_ham.jpeg
 
 flutter_native_splash:
-  color: "#2e0645"
-  image: assets/images/app.png
+  color: "#000000" # Black background
+  image: assets/images/apl.png
   android: true
   ios: true
   fullscreen: true
 
   android_12:
-    color: "#2e0645"
-    image: assets/images/app.png
-    android: true
-    ios: true
-    fullscreen: true
+    color: "#000000" # Black background for Android 12+
+    image: assets/images/apl.png
+    icon_background_color: "#000000"
 
   android_gravity: center
   ios_content_mode: scaleAspectFit
+  image_dark: assets/images/apl.png
+  
+

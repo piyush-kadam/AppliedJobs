@@ -332,6 +332,9 @@ class _ApplyState extends State<Apply> {
                     },
                   ),
                 ),
+
+                // Added spacing after submit button
+                const SizedBox(height: 50), // Extra space at the bottom
               ],
             ),
           ),

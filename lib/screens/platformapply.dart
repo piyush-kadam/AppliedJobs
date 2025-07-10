@@ -518,7 +518,7 @@ class _PlatformApplyPageState extends State<PlatformApplyPage>
                       : ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Image.asset(
-                          'assets/images/ap.png',
+                          'assets/images/lo.jpg',
                           width: 80,
                           height: 80,
                           fit: BoxFit.contain,
@@ -564,50 +564,54 @@ class _PlatformApplyPageState extends State<PlatformApplyPage>
         ),
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: SwipeableButtonView(
-          buttonText:
-              widget.isTypeA && applyLink != null
-                  ? '      Apply for this position'
-                  : 'Swipe to apply through platform',
-          buttonWidget: Container(
-            child: Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey),
+        color: Colors.transparent, // Make the outer container transparent
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          decoration: BoxDecoration(
+            color: Colors.transparent, // Make this transparent too
+            // Remove or comment out the boxShadow to avoid shadow on transparent background
+            // boxShadow: [
+            //   BoxShadow(
+            //     color: Colors.grey.withOpacity(0.2),
+            //     spreadRadius: 1,
+            //     blurRadius: 5,
+            //     offset: const Offset(0, -3),
+            //   ),
+            // ],
           ),
-          activeColor: Color(0xFF3D47D1),
-          isFinished: _isFinished,
-          onWaitingProcess: () {
-            // Immediately finish without delay to remove animation
-            setState(() {
-              _isFinished = true;
-            });
-          },
-          onFinish: () async {
-            if (widget.isTypeA && applyLink != null) {
-              await _handleExternalApply();
-            } else {
-              await _handlePlatformApply();
-            }
-            // Reset the button state after action
-            setState(() {
-              _isFinished = false;
-            });
-          },
-          buttonColor: Colors.white,
-          buttontextstyle: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+          child: SwipeableButtonView(
+            buttonText:
+                widget.isTypeA && applyLink != null
+                    ? '      Apply for this position'
+                    : 'Swipe to apply through platform',
+            buttonWidget: Container(
+              child: Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey),
+            ),
+            activeColor: Color(0xFF3D47D1),
+            isFinished: _isFinished,
+            onWaitingProcess: () {
+              // Immediately finish without delay to remove animation
+              setState(() {
+                _isFinished = true;
+              });
+            },
+            onFinish: () async {
+              if (widget.isTypeA && applyLink != null) {
+                await _handleExternalApply();
+              } else {
+                await _handlePlatformApply();
+              }
+              // Reset the button state after action
+              setState(() {
+                _isFinished = false;
+              });
+            },
+            buttonColor: Colors.white,
+            buttontextstyle: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
       ),

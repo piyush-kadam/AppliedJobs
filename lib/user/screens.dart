@@ -10,10 +10,7 @@ class ScreensPage extends StatefulWidget {
 }
 
 class _ScreensPageState extends State<ScreensPage> {
-  final List<String> images = [
-    'assets/images/pos.jpg',
-    'assets/images/pus.jpg',
-  ];
+  final List<String> images = ['assets/images/s1.jpg', 'assets/images/pus.jpg'];
 
   final PageController _pageController = PageController();
   int _currentIndex = 0;
