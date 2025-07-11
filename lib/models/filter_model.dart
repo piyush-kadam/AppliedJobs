@@ -11,6 +11,6 @@ class JobFilters {
     this.applicationStatus,
     Set<String>? companies,
     Set<String>? jobTypes,
-  })  : companies = companies ?? {},
-        jobTypes = jobTypes ?? {};
+  }) : companies = companies ?? {},
+       jobTypes = jobTypes ?? {};
 }

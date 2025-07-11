@@ -31,67 +31,6 @@ enum JobType {
   local, // Jobs from Firestore (Type B)
 }
 
-class _TabBarDelegate extends SliverPersistentHeaderDelegate {
-  final TabBar _tabBar;
-
-  _TabBarDelegate(this._tabBar);
-
-  @override
-  double get minExtent => _tabBar.preferredSize.height;
-
-  @override
-  double get maxExtent => _tabBar.preferredSize.height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return Container(
-      color: const Color(0xFFE0E0E0), // Match your background color
-      child: _tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(_TabBarDelegate oldDelegate) {
-    return false;
-  }
-}
-
-class AnimatedHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double minExtentHeight;
-  final double maxExtentHeight;
-  final Widget Function(double shrinkOffset, bool overlapsContent) builder;
-
-  AnimatedHeaderDelegate({
-    required this.minExtentHeight,
-    required this.maxExtentHeight,
-    required this.builder,
-  });
-
-  @override
-  double get minExtent => minExtentHeight;
-
-  @override
-  double get maxExtent => maxExtentHeight;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return builder(shrinkOffset, overlapsContent);
-  }
-
-  @override
-  bool shouldRebuild(covariant AnimatedHeaderDelegate oldDelegate) =>
-      maxExtentHeight != oldDelegate.maxExtentHeight ||
-      minExtentHeight != oldDelegate.minExtentHeight;
-}
-
 class JobsPage extends StatefulWidget {
   final void Function({
     required JobFilters currentFilters,
@@ -113,7 +52,7 @@ class JobsPage extends StatefulWidget {
 class _JobsPageState extends State<JobsPage>
     with AutomaticKeepAliveClientMixin {
   JobFilters _currentFilters = JobFilters();
-  bool _showFilterBox = false;
+
   List<String> _cachedStaticCompanies = [];
   List<String> _cachedGeoNamesCities = [];
   bool _isLoadingFilterData = true;
@@ -511,70 +450,6 @@ class _JobsPageState extends State<JobsPage>
 
   // Helper methods to extract unique filter values
 
-  Future<void> _fetchFilterData() async {
-    try {
-      final companies = await fetchStaticCompanies();
-      final cities = await fetchGeoNamesCities(country: "IN", limit: 100);
-      if (_isMounted) {
-        setState(() {
-          _cachedStaticCompanies = companies;
-          _cachedGeoNamesCities = cities;
-          _isLoadingFilterData = false;
-        });
-      }
-    } catch (e) {
-      if (kDebugMode) print('Error fetching filter data: $e');
-      if (_isMounted) {
-        setState(() {
-          _isLoadingFilterData = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _refreshMatchedJobs() async {
-    // Reset the fetch counter when manually refreshing
-    _bestForYouFetchCount = 0;
-    _cachedMatchedJobs = null;
-    _clearCache();
-    setState(() {
-      _matchedJobsFuture = _getMatchedJobs(); // Re-fetch on pull-to-refresh
-    });
-  }
-
-  Future<List<String>> fetchStaticCompanies() async {
-    final response = await http.get(
-      Uri.parse(
-        'https://gist.githubusercontent.com/Anshhb/c1514a5849014d0934659176c98ed8df/raw/f12e1ba4ad14c3699265f95ba3700004d7fda23b/dropdown_options.json',
-      ),
-    );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return List<String>.from(data['companies'] ?? []);
-    } else {
-      throw Exception('Failed to load companies from gist');
-    }
-  }
-
-  Future<List<String>> fetchGeoNamesCities({
-    String country = "IN",
-    int limit = 100,
-  }) async {
-    const geoNamesUser = "ab3003"; // Replace with your GeoNames username
-    final response = await http.get(
-      Uri.parse(
-        'http://api.geonames.org/searchJSON?formatted=true&country=$country&featureClass=P&maxRows=$limit&username=$geoNamesUser',
-      ),
-    );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final List cities = data['geonames'];
-      return cities.map<String>((city) => city['name'] as String).toList();
-    } else {
-      throw Exception('Failed to load cities from GeoNames');
-    }
-  }
-
   Future<void> _initializeData() async {
     if (!_isMounted) return;
 
@@ -639,14 +514,6 @@ class _JobsPageState extends State<JobsPage>
     }
   }
 
-  @override
-  void dispose() {
-    _isMounted = false;
-    _scrollController.dispose();
-    _searchController.dispose();
-    super.dispose();
-  }
-
   Future<void> _loadJobs() async {
     if (!_isMounted) return;
 
@@ -708,6 +575,56 @@ class _JobsPageState extends State<JobsPage>
     }
   }
 
+  Future<void> _fetchNextPage() async {
+    if (_isLoadingApi) return;
+
+    setState(() => _isLoadingApi = true);
+    try {
+      final newJobs = await ApiService().fetchJobsPage(page: _currentPage);
+      if (newJobs.isEmpty) {
+        _hasMore = false;
+      } else {
+        if (_isMounted) {
+          setState(() {
+            _apiJobs.addAll(newJobs);
+            _currentPage++;
+
+            // ✅ Update global cache
+            cachedApiJobs = List.from(_apiJobs);
+            cachedCurrentPage = _currentPage;
+            cachedHasMore = _hasMore;
+          });
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) print("❌ Error fetching jobs: $e");
+    } finally {
+      if (_isMounted) {
+        setState(() => _isLoadingApi = false);
+      }
+    }
+  }
+
+  // Function to clear cache - call this when user wants to refresh
+  void _clearCache() {
+    cachedApiJobs = null;
+    cachedLocalJobs = null;
+    cachedCurrentPage = 1;
+    cachedHasMore = true;
+    hasInitiallyLoaded = false;
+    _cachedMatchedJobs = null;
+    _bestForYouFetchCount = 0;
+
+    // ✅ Show loading indicator immediately when refreshing
+    setState(() {
+      _showLoadingScreen = true;
+    });
+
+    _initializeData();
+  }
+
+  // ✅ New loading indicator widget with branded styling
+
   void _combineAndShuffleJobs() {
     // Convert API jobs to the same format as local jobs
     final formattedApiJobs =
@@ -744,6 +661,74 @@ class _JobsPageState extends State<JobsPage>
 
     // Apply filters to the combined jobs
     _applyFilters();
+  }
+
+  Widget _buildCombinedJobsList() {
+    // ✅ Show loading indicator when either explicitly showing loading screen
+    //    or during combined loading operation
+    if (_showLoadingScreen || _isLoadingCombined) {
+      return _buildLoadingIndicator();
+    }
+
+    // Only show "no jobs" message AFTER loading is finished
+    if (_filteredJobs.isEmpty &&
+        !_isRestoringFromCache &&
+        !_isLoadingCombined) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 200),
+          Center(
+            child: Text(
+              'No matching jobs found',
+              style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 16),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: (ScrollNotification scrollInfo) {
+        // 🎯 THIS HANDLES YOUR PAGINATION - Same logic as your _onScroll method!
+        if (scrollInfo.metrics.pixels >=
+                scrollInfo.metrics.maxScrollExtent - 200 &&
+            !_isLoadingApi &&
+            _hasMore) {
+          print("🔄 Fetching next page..."); // Debug log
+
+          _fetchNextPage().then((_) {
+            _combineAndShuffleJobs();
+            if (_isMounted) setState(() {});
+          });
+        }
+        return false; // Allow the scroll event to continue
+      },
+      child: ListView.builder(
+        // ✅ No ScrollController - this allows NestedScrollView to work properly
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: _filteredJobs.length + (_isLoadingApi && _hasMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == _filteredJobs.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFF3D47D1)),
+              ),
+            );
+          }
+
+          final job = _filteredJobs[index];
+          final isApiJob = job['type'] == JobType.api;
+
+          if (isApiJob) {
+            return _buildApiJobCard(job);
+          } else {
+            return _buildLocalJobCard(job);
+          }
+        },
+      ),
+    );
   }
 
   void _applyFilters() {
@@ -885,188 +870,6 @@ class _JobsPageState extends State<JobsPage>
     }
   }
 
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 200 &&
-        !_isLoadingApi &&
-        _hasMore) {
-      _fetchNextPage().then((_) {
-        _combineAndShuffleJobs();
-        if (_isMounted) setState(() {});
-      });
-    }
-  }
-
-  Future<void> _fetchNextPage() async {
-    if (_isLoadingApi) return;
-
-    setState(() => _isLoadingApi = true);
-    try {
-      final newJobs = await ApiService().fetchJobsPage(page: _currentPage);
-      if (newJobs.isEmpty) {
-        _hasMore = false;
-      } else {
-        if (_isMounted) {
-          setState(() {
-            _apiJobs.addAll(newJobs);
-            _currentPage++;
-
-            // ✅ Update global cache
-            cachedApiJobs = List.from(_apiJobs);
-            cachedCurrentPage = _currentPage;
-            cachedHasMore = _hasMore;
-          });
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) print("❌ Error fetching jobs: $e");
-    } finally {
-      if (_isMounted) {
-        setState(() => _isLoadingApi = false);
-      }
-    }
-  }
-
-  // Function to clear cache - call this when user wants to refresh
-  void _clearCache() {
-    cachedApiJobs = null;
-    cachedLocalJobs = null;
-    cachedCurrentPage = 1;
-    cachedHasMore = true;
-    hasInitiallyLoaded = false;
-    _cachedMatchedJobs = null;
-    _bestForYouFetchCount = 0;
-
-    // ✅ Show loading indicator immediately when refreshing
-    setState(() {
-      _showLoadingScreen = true;
-    });
-
-    _initializeData();
-  }
-
-  // ✅ New loading indicator widget with branded styling
-  Widget _buildLoadingIndicator() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(
-            color: Color(0xFF3D47D1),
-            strokeWidth: 3,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            "Discovering jobs for you...",
-            style: GoogleFonts.poppins(
-              color: Color(0xFF3D47D1),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCombinedJobsList() {
-    // ✅ Show loading indicator when either explicitly showing loading screen
-    //    or during combined loading operation
-    if (_showLoadingScreen || _isLoadingCombined) {
-      return _buildLoadingIndicator();
-    }
-
-    // Only show "no jobs" message AFTER loading is finished
-    if (_filteredJobs.isEmpty &&
-        !_isRestoringFromCache &&
-        !_isLoadingCombined) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          const SizedBox(height: 200),
-          Center(
-            child: Text(
-              'No matching jobs found',
-              style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 16),
-            ),
-          ),
-        ],
-      );
-    }
-
-    return NotificationListener<ScrollNotification>(
-      onNotification: (ScrollNotification scrollInfo) {
-        // 🎯 THIS HANDLES YOUR PAGINATION - Same logic as your _onScroll method!
-        if (scrollInfo.metrics.pixels >=
-                scrollInfo.metrics.maxScrollExtent - 200 &&
-            !_isLoadingApi &&
-            _hasMore) {
-          print("🔄 Fetching next page..."); // Debug log
-
-          _fetchNextPage().then((_) {
-            _combineAndShuffleJobs();
-            if (_isMounted) setState(() {});
-          });
-        }
-        return false; // Allow the scroll event to continue
-      },
-      child: ListView.builder(
-        // ✅ No ScrollController - this allows NestedScrollView to work properly
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: _filteredJobs.length + (_isLoadingApi && _hasMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == _filteredJobs.length) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: CircularProgressIndicator(color: Color(0xFF3D47D1)),
-              ),
-            );
-          }
-
-          final job = _filteredJobs[index];
-          final isApiJob = job['type'] == JobType.api;
-
-          if (isApiJob) {
-            return _buildApiJobCard(job);
-          } else {
-            return _buildLocalJobCard(job);
-          }
-        },
-      ),
-    );
-  }
-
-  List<String> _getUniqueRoles() {
-    final roles = <String>{};
-    for (final job in _combinedJobs) {
-      final title = (job['title'] ?? job['job_title'] ?? '').toString();
-      if (title.isNotEmpty) roles.add(title);
-    }
-    return roles.toList();
-  }
-
-  List<String> _getUniqueLocations() {
-    final locations = <String>{};
-    for (final job in _combinedJobs) {
-      final location =
-          (job['location'] ?? job['job_city'] ?? job['job_country'] ?? '')
-              .toString();
-      if (location.isNotEmpty) locations.add(location);
-    }
-    return locations.toList();
-  }
-
-  List<String> _getUniqueCompanies() {
-    final companies = <String>{};
-    for (final job in _combinedJobs) {
-      final company =
-          (job['companyName'] ?? job['employer_name'] ?? '').toString();
-      if (company.isNotEmpty) companies.add(company);
-    }
-    return companies.toList();
-  }
-
   Future<List<Map<String, dynamic>>> _getMatchedJobs() async {
     // If we've already fetched the maximum number of times, return the cached results
     if (_bestForYouFetchCount >= _maxBestForYouFetches &&
@@ -1137,6 +940,89 @@ class _JobsPageState extends State<JobsPage>
       if (kDebugMode) print("❌ Error in _getMatchedJobs: $e");
       return [];
     }
+  }
+
+  Future<void> _refreshMatchedJobs() async {
+    // Reset the fetch counter when manually refreshing
+    _bestForYouFetchCount = 0;
+    _cachedMatchedJobs = null;
+    _clearCache();
+    setState(() {
+      _matchedJobsFuture = _getMatchedJobs(); // Re-fetch on pull-to-refresh
+    });
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingApi &&
+        _hasMore) {
+      _fetchNextPage().then((_) {
+        _combineAndShuffleJobs();
+        if (_isMounted) setState(() {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _isMounted = false;
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildLoadingIndicator() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(
+            color: Color(0xFF3D47D1),
+            strokeWidth: 3,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "Discovering jobs for you...",
+            style: GoogleFonts.poppins(
+              color: Color(0xFF3D47D1),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<String> _getUniqueRoles() {
+    final roles = <String>{};
+    for (final job in _combinedJobs) {
+      final title = (job['title'] ?? job['job_title'] ?? '').toString();
+      if (title.isNotEmpty) roles.add(title);
+    }
+    return roles.toList();
+  }
+
+  List<String> _getUniqueLocations() {
+    final locations = <String>{};
+    for (final job in _combinedJobs) {
+      final location =
+          (job['location'] ?? job['job_city'] ?? job['job_country'] ?? '')
+              .toString();
+      if (location.isNotEmpty) locations.add(location);
+    }
+    return locations.toList();
+  }
+
+  List<String> _getUniqueCompanies() {
+    final companies = <String>{};
+    for (final job in _combinedJobs) {
+      final company =
+          (job['companyName'] ?? job['employer_name'] ?? '').toString();
+      if (company.isNotEmpty) companies.add(company);
+    }
+    return companies.toList();
   }
 
   Future<void> _fetchAppliedJobs() async {
@@ -1434,6 +1320,60 @@ class _JobsPageState extends State<JobsPage>
     return match?.group(0);
   }
 
+  Future<void> _fetchFilterData() async {
+    try {
+      final companies = await fetchStaticCompanies();
+      final cities = await fetchGeoNamesCities(country: "IN", limit: 100);
+      if (_isMounted) {
+        setState(() {
+          _cachedStaticCompanies = companies;
+          _cachedGeoNamesCities = cities;
+          _isLoadingFilterData = false;
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) print('Error fetching filter data: $e');
+      if (_isMounted) {
+        setState(() {
+          _isLoadingFilterData = false;
+        });
+      }
+    }
+  }
+
+  Future<List<String>> fetchStaticCompanies() async {
+    final response = await http.get(
+      Uri.parse(
+        'https://gist.githubusercontent.com/Anshhb/c1514a5849014d0934659176c98ed8df/raw/f12e1ba4ad14c3699265f95ba3700004d7fda23b/dropdown_options.json',
+      ),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return List<String>.from(data['companies'] ?? []);
+    } else {
+      throw Exception('Failed to load companies from gist');
+    }
+  }
+
+  Future<List<String>> fetchGeoNamesCities({
+    String country = "IN",
+    int limit = 100,
+  }) async {
+    const geoNamesUser = "ab3003"; // Replace with your GeoNames username
+    final response = await http.get(
+      Uri.parse(
+        'http://api.geonames.org/searchJSON?formatted=true&country=$country&featureClass=P&maxRows=$limit&username=$geoNamesUser',
+      ),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List cities = data['geonames'];
+      return cities.map<String>((city) => city['name'] as String).toList();
+    } else {
+      throw Exception('Failed to load cities from GeoNames');
+    }
+  }
+
   // Helper function to extract experience level
   String? _extractExperience(String? description) {
     if (description == null) return null;
@@ -1473,8 +1413,6 @@ class _JobsPageState extends State<JobsPage>
 
     return null;
   }
-
-  // Widget to display info pills for API jobs
 
   String _cleanTitle(String title) {
     // Removes non-alphanumeric characters except basic punctuation and spaces
